@@ -1,4 +1,4 @@
-#LEGO® Inventory
+# LEGO® Inventory
 
 A repo to manage my personal LEGO® inventory.
 
