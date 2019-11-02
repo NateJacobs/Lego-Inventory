@@ -12,7 +12,6 @@
         "fideloper/proxy": "^4.0",
         "inspheric/nova-url-field": "^1.32",
         "laravel/framework": "^6.0",
-        "laravel/nova": "~2.0",
         "laravel/tinker": "^1.0",
         "laravel/ui": "^1.0",
         "league/csv": "^9.3",
@@ -36,10 +35,6 @@
         {
             "type": "vcs",
             "url": "https://github.com/NateJacobs/Mursten-Track"
-        },
-        {
-            "type": "path",
-            "url": "./nova"
         }
     ],
     "config": {
