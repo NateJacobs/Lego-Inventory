@@ -15,6 +15,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/blink', 'Test@bricklink');
-
 Auth::routes(['register' => false]);
