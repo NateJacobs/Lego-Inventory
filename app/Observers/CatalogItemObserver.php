@@ -133,6 +133,10 @@ class CatalogItemObserver
     {
         $subtheme = Theme::select('id')->where('parent_id', $theme_id)->where('name', $subtheme_name)->first();
 
-        return $subtheme->id;
+        if (is_null($subtheme)) {
+			return 0;
+		} else {
+			return $subtheme->id;
+		}
     }
 }
