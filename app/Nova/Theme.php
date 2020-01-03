@@ -64,8 +64,8 @@ class Theme extends Resource
     {
         return [
             Text::make('Name')->sortable(),
-            Number::make('Unique Set Count', 'catalog_items_count')->sortable(),
-            Number::make('Subtheme Count', 'subthemes_count')->sortable(),
+            Number::make('Unique Set Count', 'catalog_items_count')->sortable()->OnlyOnIndex(),
+            Number::make('Subtheme Count', 'subthemes_count')->sortable()->OnlyOnIndex(),
             HasMany::make('Subtheme', 'Subthemes'),
             HasMany::make('Catalog Item', 'CatalogItems'),
         ];
