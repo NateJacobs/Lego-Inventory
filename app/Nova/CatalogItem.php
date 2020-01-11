@@ -68,8 +68,8 @@ class CatalogItem extends Resource
             Number::make('Pieces', 'piece_count')->sortable()->hideWhenCreating(),
             Number::make('Minifigs', 'minifig_count')->sortable()->hideWhenCreating(),
             Currency::make('MSRP', 'retail_price')->format('%.2n')->sortable()->hideWhenCreating(),
-            Currency::make('Current New Price', 'current_value_new')->format('%.2n')->onlyOnDetail()->sortable()->hideWhenCreating(),
-            Currency::make('Current Used Price', 'current_value_used')->format('%.2n')->onlyOnDetail()->sortable()->hideWhenCreating(),
+            Currency::make('Current New Price', 'current_value_new')->format('%.2n')->hideFromIndex()->sortable()->hideWhenCreating(),
+            Currency::make('Current Used Price', 'current_value_used')->format('%.2n')->hideFromIndex()->sortable()->hideWhenCreating(),
             Number::make('Total Sets', 'sets_count')->sortable()->exceptOnForms(),
             Currency::make('Total Value', function() {
                 return money_format('%.2n', $this->sets_count * $this->retail_price);
@@ -131,6 +131,6 @@ class CatalogItem extends Resource
      */
     public function actions(Request $request)
     {
-        return [];
+        return [new Actions\UpdateBricklinkPrices];
     }
 }
