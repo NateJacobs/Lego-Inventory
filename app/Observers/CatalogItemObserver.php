@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\CatalogItem;
 use App\Models\Theme;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use NateJacobs\MurstenStock\Client as BLClient;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
@@ -102,8 +103,20 @@ class CatalogItemObserver
                 ]
             );
 
-            $new = trim(substr($price_response_new[0]->aggregatePrices['averagePrice'], 3));
-            $used = trim(substr($price_response_used[0]->aggregatePrices['averagePrice'], 3));
+            $new = trim(str_replace('$', '', $price_response_new[0]->aggregatePrices['averagePrice']));
+            $used = trim(str_replace('$', '', $price_response_used[0]->aggregatePrices['averagePrice']));
+
+            if ( strlen($new) >= 6 ) {
+                $new = trim(substr($new, 2));
+            } elseif ( strlen($new) <= 5 ) {
+                $new = trim($new);
+            }
+
+            if ( strlen($used) >= 6 ) {
+                $used = trim(substr($used, 2));
+            } elseif ( strlen($used) <= 5 ) {
+                $used = trim($used);
+            }
 
             if ( '0.00' == $new && '0.00' == $used ) {
                 $new = $catalogItem->retail_price;
