@@ -48,9 +48,9 @@ class CollectionLog extends Resource
             Date::make('Date')->format('MMMM DD, YYYY'),
             Number::make('Total Sets'),
             Number::make('Piece Count'),
-            Currency::make('Retail Value')->format('%.2n'),
-            Currency::make('Used Value')->format('%.2n'),
-            Currency::make('New Value')->format('%.2n'),
+            Currency::make('Retail Value'),
+            Currency::make('Used Value'),
+            Currency::make('New Value'),
             Markdown::make('Notes'),
         ];
     }

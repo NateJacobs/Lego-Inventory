@@ -52,9 +52,10 @@ class Set extends Resource
         return [
             Avatar::make('Image', 'CatalogItem.thumbnail_path')->exceptOnForms()->hideFromDetail(),
             BelongsTo::make('Set', 'CatalogItem', 'App\Nova\CatalogItem')->searchable()->sortable(),
-            Currency::make('Retail Price', 'CatalogItem.retail_price')->format('%.2n')->exceptOnForms(),
+            Currency::make('Retail Price', 'CatalogItem.retail_price')
+                ->exceptOnForms(),
             Date::make('Purchase Date')->format('MMMM DD, YYYY')->sortable(),
-            Currency::make('Purchase Price')->format('%.2n'),
+            Currency::make('Purchase Price'),
             Text::make('Savings', function() {
                 if (
                     (isset($this->CatalogItem->retail_price) && $this->CatalogItem->retail_price > 0)

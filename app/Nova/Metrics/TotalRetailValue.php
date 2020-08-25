@@ -20,7 +20,7 @@ class TotalRetailValue extends Value
             )->get();
 
         $result = new \Laravel\Nova\Metrics\ValueResult($sets->sum('retail_price'));
-        return $result->currency('$')->format('0,0.00');
+        return $result->currency('$');
     }
 
     /**

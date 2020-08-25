@@ -29,7 +29,7 @@ class CollectionRetailValue extends Value
         $total = $sets_retail + $bulk_retail + $bricklink_retail;
 
         $result = new \Laravel\Nova\Metrics\ValueResult($total);
-        return $result->currency('$')->format('0,0.00');
+        return $result->currency('$');
     }
 
     /**

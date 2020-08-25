@@ -47,8 +47,8 @@ class BulkBrick extends Resource
     {
         return [
             Number::make('Pieces', 'piece_count'),
-            Currency::make('Cost')->format('%.2n'),
-            Currency::make('Value')->format('%.2n'),
+            Currency::make('Cost'),
+            Currency::make('Value'),
             Date::make('Date', 'acquired_date')->format('MMMM DD, YYYY'),
             Markdown::make('Notes')->alwaysShow(),
             BelongsTo::make('Acquired Location', 'AcquiredLocation')->sortable(),

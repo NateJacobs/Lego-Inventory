@@ -17,7 +17,7 @@ class TotalUsedValue extends Value
     {
         $sets = \App\Models\CatalogItem::withCount('sets')->get();
         $result = new \Laravel\Nova\Metrics\ValueResult($sets->sum('total_used_value'));
-        return $result->currency('$')->format('0,0.00');
+        return $result->currency('$');
     }
 
     /**

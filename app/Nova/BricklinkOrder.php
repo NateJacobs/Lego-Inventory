@@ -55,15 +55,14 @@ class BricklinkOrder extends Resource
             Number::make('Order Number')->sortable()->rules('required'),
             Number::make('Pieces')->sortable()->rules('required'),
             Currency::make('Order Cost')
-                ->format('%.2n')
                 ->sortable()
                 ->rules('required')
                 ->hideFromIndex(),
             Currency::make('Shipping Cost')
-                ->format('%.2n')
                 ->rules('required')
                 ->hideFromIndex(),
-            Currency::make('Total Cost')->format('%.2n')->readOnly(),
+            Currency::make('Total Cost')
+                ->readOnly(),
             Markdown::make('Notes')->alwaysShow(),
             KeyValue::make('Details')->rules('json'),
         ];
