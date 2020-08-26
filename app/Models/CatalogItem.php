@@ -29,6 +29,12 @@ class CatalogItem extends Model
         'total_set_pieces',
     ];
 
+    protected $attributes = [
+        'current_value_new' => 0,
+        'current_value_used' => 0,
+        'retail_price' => 0,
+    ];
+
     public function sets()
     {
         return $this->hasMany('App\Models\Set');
