@@ -64,7 +64,7 @@ class BricklinkOrder extends Resource
             Currency::make('Total Cost')
                 ->readOnly(),
             Markdown::make('Notes')->alwaysShow(),
-            KeyValue::make('Details')->rules('json'),
+            //KeyValue::make('Details')->rules('json'),
         ];
     }
 
