@@ -33,7 +33,7 @@ class CatalogItemObserver
         	// do nothing
         } else {
         	// save images
-        	if ('true' === $set_response[0]->images['image']) {
+        	if (isset($set_response[0]->images['imageURL']) && !empty($set_response[0]->images['imageURL'])) {
         		$name = $set_response[0]->itemNumbers['number'].'-'.(int) $set_response[0]->itemNumbers['numberVariant'];
 
         		$full_image = file_get_contents($set_response[0]->images['imageURL']);
@@ -54,7 +54,7 @@ class CatalogItemObserver
     		$catalogItem->name = $set_response[0]->name;
     		$catalogItem->piece_count = (int) $set_response[0]->pieces;
     		$catalogItem->minifig_count = empty($set_response[0]->minifigs) ? 0 : $set_response[0]->minifigs;
-    		$catalogItem->retail_price = empty($set_response[0]->prices->US['retailPrice']) ? 0 : $set_response[0]->prices->US['retailPrice'];
+    		$catalogItem->retail_price = empty($set_response[0]->prices['US']['retailPrice']) ? 0 : $set_response[0]->prices['US']['retailPrice'];
     		$catalogItem->year = $set_response[0]->year;
     		$catalogItem->theme_id = $this->getTheme($set_response[0]->themeDetails['theme']);
     		$catalogItem->subtheme_id = $this->getSubTheme($set_response[0]->themeDetails['subtheme'], $catalogItem->theme_id);
