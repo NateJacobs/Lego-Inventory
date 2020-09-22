@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c40ef303db976706821a110855f0bcc5",
+    "content-hash": "438c442f806e2145a789ec0e9e946d39",
     "packages": [
         {
             "name": "brick/math",
@@ -1427,6 +1427,47 @@
                 "url"
             ],
             "time": "2019-06-02T13:02:53+00:00"
+        },
+        {
+            "name": "jeffbeltran/sanctum-tokens",
+            "version": "v1.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/JeffBeltran/sanctum-tokens.git",
+                "reference": "1a6206cf20ee66b83bffba618c0044ea0b6461c0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/JeffBeltran/sanctum-tokens/zipball/1a6206cf20ee66b83bffba618c0044ea0b6461c0",
+                "reference": "1a6206cf20ee66b83bffba618c0044ea0b6461c0",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Jeffbeltran\\SanctumTokens\\ToolServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Jeffbeltran\\SanctumTokens\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A Laravel Nova resource tool for sanctum tokens.",
+            "keywords": [
+                "laravel",
+                "nova"
+            ],
+            "time": "2020-09-19T12:29:38+00:00"
         },
         {
             "name": "laravel/framework",
