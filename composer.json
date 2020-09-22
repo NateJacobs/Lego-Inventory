@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
+    "name": "natejacobs/lego-inventory",
     "type": "project",
-    "description": "The Laravel Framework.",
+    "description": "Your LEGO (R) Set Inventory.",
     "keywords": [
         "framework",
         "laravel"
@@ -9,25 +9,26 @@
     "license": "MIT",
     "require": {
         "php": "^7.2.5",
+        "facade/ignition": "^2.3.6",
         "fideloper/proxy": "^4.0",
         "inspheric/nova-url-field": "^1.32",
-        "laravel/framework": "^7.0",
+        "laravel/framework": "^8.0",
         "laravel/nova": "~3.0",
+        "laravel/sanctum": "^2.6",
         "laravel/tinker": "^2.0",
-        "laravel/ui": "^2.0",
+        "laravel/ui": "^3.0",
         "league/csv": "^9.3",
         "natejacobs/mursten-stock": "dev-master",
         "natejacobs/mursten-track": "dev-master",
-        "saumini/count": "^1.0",
-        "facade/ignition": "^2.0"
+        "saumini/count": "^1.0"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",
         "filp/whoops": "^2.0",
         "fzaninotto/faker": "^1.4",
         "mockery/mockery": "^1.0",
-        "nunomaduro/collision": "^4.1",
-        "phpunit/phpunit": "^8.5"
+        "nunomaduro/collision": "^5.0",
+        "phpunit/phpunit": "^9.0"
     },
     "repositories": [
         {
