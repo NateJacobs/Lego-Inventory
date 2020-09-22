@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\CatalogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,12 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->prefix('catalog')->group(function () {
+    Route::get('{setNumber}/{setVariant?}', [CatalogController::class, 'getDetails']);
+    // Route::get('{setNumber}/owned', [CatalogController::class, 'getOwned']);
+});
+
+Route::fallback(function(){
+    return response()->json([
+        'message' => 'Not Found.'], 404);
 });
