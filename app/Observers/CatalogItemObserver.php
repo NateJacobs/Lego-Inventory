@@ -137,19 +137,29 @@ class CatalogItemObserver
 
     private function getTheme($theme_name)
     {
-        $theme = Theme::select('id')->where('name', $theme_name)->whereNull('parent_id')->first();
+        if (empty($theme_name)) {
+            return null;
+        }
 
-        return $theme->id;
+        // Match an existing top-level theme by name, or create it.
+        return Theme::firstOrCreate([
+            'name' => $theme_name,
+            'parent_id' => null,
+        ])->id;
     }
 
     private function getSubTheme($subtheme_name, $theme_id)
     {
-        $subtheme = Theme::select('id')->where('parent_id', $theme_id)->where('name', $subtheme_name)->first();
+        // 0 signals "no subtheme": a set without a subtheme, or one whose
+        // parent theme could not be resolved.
+        if (empty($subtheme_name) || empty($theme_id)) {
+            return 0;
+        }
 
-        if (is_null($subtheme)) {
-			return 0;
-		} else {
-			return $subtheme->id;
-		}
+        // Match an existing subtheme under this theme by name, or create it.
+        return Theme::firstOrCreate([
+            'name' => $subtheme_name,
+            'parent_id' => $theme_id,
+        ])->id;
     }
 }
