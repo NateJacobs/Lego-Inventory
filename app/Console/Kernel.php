@@ -24,8 +24,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // Refresh every owned set's BrickLink price once a month and snapshot
+        // the collection's value when the batch finishes. The batch throttles
+        // itself, so it may run for a day or two on large collections.
+        $schedule->command('collection:refresh-prices')
+                 ->monthlyOn(1, '02:00')
+                 ->withoutOverlapping();
     }
 
     /**
