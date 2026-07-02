@@ -1,11 +1,15 @@
 /node_modules
 /public/hot
 /public/storage
+/public/vendor
+/resources/lang/vendor
+/resources/views/vendor
 /storage/*.key
 /vendor
 /nova
 .env
 .phpunit.result.cache
+.phpunit.cache
 Homestead.json
 Homestead.yaml
 npm-debug.log
