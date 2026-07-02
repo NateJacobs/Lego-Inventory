@@ -2,6 +2,7 @@
 
 namespace App\Nova;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Laravel\Nova\Resource as NovaResource;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
@@ -57,7 +58,7 @@ abstract class Resource extends NovaResource
         return parent::relatableQuery($request, $query);
     }
 
-    protected static function applyOrderings($query, array $orderings)
+    protected static function applyOrderings(Builder $query, array $orderings): Builder
     {
         if (empty($orderings) && property_exists(static::class, 'orderBy')) {
             $orderings = static::$orderBy;

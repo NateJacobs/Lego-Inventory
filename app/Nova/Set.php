@@ -54,7 +54,7 @@ class Set extends Resource
             BelongsTo::make('Set', 'CatalogItem', 'App\Nova\CatalogItem')->searchable()->sortable(),
             Currency::make('Retail Price', 'CatalogItem.retail_price')
                 ->exceptOnForms(),
-            Date::make('Purchase Date')->format('MMMM DD, YYYY')->sortable(),
+            Date::make('Purchase Date')->displayUsing(fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('F d, Y') : null)->sortable(),
             Currency::make('Purchase Price'),
             Text::make('Savings', function() {
                 if (

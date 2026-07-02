@@ -45,7 +45,7 @@ class CollectionLog extends Resource
     public function fields(Request $request)
     {
         return [
-            Date::make('Date')->format('MMMM DD, YYYY'),
+            Date::make('Date')->displayUsing(fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('F d, Y') : null),
             Number::make('Total Sets'),
             Number::make('Piece Count'),
             Currency::make('Retail Value'),

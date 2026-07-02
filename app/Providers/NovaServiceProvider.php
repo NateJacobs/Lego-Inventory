@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Nova\Dashboards\Main;
 use Laravel\Nova\Nova;
-use Laravel\Nova\Cards\Help;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Nova\NovaApplicationServiceProvider;
 
@@ -30,6 +31,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
         Nova::routes()
                 ->withAuthenticationRoutes()
                 ->withPasswordResetRoutes()
+                ->withoutEmailVerificationRoutes()
                 ->register();
     }
 
@@ -42,7 +44,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     protected function gate()
     {
-        Gate::define('viewNova', function ($user) {
+        Gate::define('viewNova', function (User $user) {
             return in_array($user->email, [
                 env('ADMIN_EMAIL'),
             ]);
@@ -50,20 +52,14 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     }
 
     /**
-     * Get the cards that should be displayed on the Nova dashboard.
+     * Get the dashboards that should be listed in the Nova sidebar.
      *
      * @return array
      */
-    protected function cards()
+    protected function dashboards()
     {
         return [
-            // new Help,
-            (new \App\Nova\Metrics\CollectionTrendByYear)->width('1/2'),
-            (new \App\Nova\Metrics\TotalCollectionPiecePartition)->width('1/2'),
-            (new \App\Nova\Metrics\TotalSets)->width('1/4'),
-            (new \App\Nova\Metrics\TotalMinifigs)->width('1/4'),
-            (new \App\Nova\Metrics\TotalCollectionUsedValue)->width('1/4'),
-            (new \App\Nova\Metrics\TotalCollectionNewValue)->width('1/4'),
+            new Main,
         ];
     }
 
@@ -84,6 +80,6 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     public function register()
     {
-        //
+        parent::register();
     }
 }

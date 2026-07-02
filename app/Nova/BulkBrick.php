@@ -49,7 +49,7 @@ class BulkBrick extends Resource
             Number::make('Pieces', 'piece_count'),
             Currency::make('Cost'),
             Currency::make('Value'),
-            Date::make('Date', 'acquired_date')->format('MMMM DD, YYYY'),
+            Date::make('Date', 'acquired_date')->displayUsing(fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('F d, Y') : null),
             Markdown::make('Notes')->alwaysShow(),
             BelongsTo::make('Acquired Location', 'AcquiredLocation')->sortable(),
         ];

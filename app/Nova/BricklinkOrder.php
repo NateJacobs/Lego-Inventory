@@ -49,7 +49,7 @@ class BricklinkOrder extends Resource
     public function fields(Request $request)
     {
         return [
-            Date::make('Purchase Date')->format('MMMM DD, YYYY')->sortable()->rules('required'),
+            Date::make('Purchase Date')->displayUsing(fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('F d, Y') : null)->sortable()->rules('required'),
             Text::make('Seller Name')->sortable()->rules('required'),
             Text::make('Store Name')->sortable()->rules('required'),
             Number::make('Order Number')->sortable()->rules('required'),
