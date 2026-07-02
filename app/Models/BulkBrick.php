@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class BulkBrick extends Model
 {
-    public $dates = [
-        'acquired_date',
+    protected $casts = [
+        'acquired_date' => 'date',
     ];
 
     public function acquiredLocation()
