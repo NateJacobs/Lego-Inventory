@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Exceptions\BricksetLookupException;
 use App\Models\CatalogItem;
 use App\Models\Theme;
 use Illuminate\Support\Facades\Log;
@@ -29,40 +30,52 @@ class CatalogItemObserver
             ]
         );
 
-        if ($set_response instanceof \NateJacobs\MurstenTrack\Exceptions\ResponseException) {
-        	// do nothing
+        // getSets returns a valid array only when a set is found; on failure it
+        // returns a ResponseException, an ErrorException, or null. Fail with a
+        // clear message rather than treating that result as an array (and rather
+        // than later hitting a NOT NULL error because no fields got populated).
+        if (! is_array($set_response) || ! isset($set_response[0])) {
+            $reason = $set_response instanceof \Throwable
+                ? $set_response->getMessage()
+                : 'no matching set was found';
+
+            $setNumber = $catalogItem->set_number.'-'.$catalogItem->set_number_variant;
+
+            throw new BricksetLookupException("Could not load set {$setNumber} from Brickset: {$reason}");
+        }
+
+        $set = $set_response[0];
+
+        // save images
+        if (isset($set->images['imageURL']) && ! empty($set->images['imageURL'])) {
+            $name = $set->itemNumbers['number'].'-'.(int) $set->itemNumbers['numberVariant'];
+
+            $full_image = file_get_contents($set->images['imageURL']);
+            $full_image_path = 'set-images/full-'.$name.'.jpg';
+            Storage::disk('public')->put($full_image_path, $full_image);
+
+            $thumbnail_image = file_get_contents($set->images['thumbnailURL']);
+            $thumbnail_image_path = 'set-images/thumb-'.$name.'.jpg';
+            Storage::disk('public')->put($thumbnail_image_path, $thumbnail_image);
         } else {
-        	// save images
-        	if (isset($set_response[0]->images['imageURL']) && !empty($set_response[0]->images['imageURL'])) {
-        		$name = $set_response[0]->itemNumbers['number'].'-'.(int) $set_response[0]->itemNumbers['numberVariant'];
+            $full_image_path = '';
+            $thumbnail_image_path = '';
+        }
 
-        		$full_image = file_get_contents($set_response[0]->images['imageURL']);
-                $full_image_path = 'set-images/full-'.$name.'.jpg';
-        		Storage::disk('public')->put($full_image_path, $full_image);
-
-        		$thumbnail_image = file_get_contents($set_response[0]->images['thumbnailURL']);
-                $thumbnail_image_path = 'set-images/thumb-'.$name.'.jpg';
-        		Storage::disk('public')->put($thumbnail_image_path, $thumbnail_image);
-        	} else {
-        		$full_image_path = '';
-        		$thumbnail_image_path = '';
-        	}
-
-    		$catalogItem->brickset_id = (int) $set_response[0]->itemNumbers['setID'];
-    		$catalogItem->set_number = $set_response[0]->itemNumbers['number'];
-    		$catalogItem->set_number_variant = (int) $set_response[0]->itemNumbers['numberVariant'];
-    		$catalogItem->name = $set_response[0]->name;
-    		$catalogItem->piece_count = (int) $set_response[0]->pieces;
-    		$catalogItem->minifig_count = empty($set_response[0]->minifigs) ? 0 : $set_response[0]->minifigs;
-    		$catalogItem->retail_price = empty($set_response[0]->prices['US']['retailPrice']) ? 0 : $set_response[0]->prices['US']['retailPrice'];
-    		$catalogItem->year = $set_response[0]->year;
-    		$catalogItem->theme_id = $this->getTheme($set_response[0]->themeDetails['theme']);
-    		$catalogItem->subtheme_id = $this->getSubTheme($set_response[0]->themeDetails['subtheme'], $catalogItem->theme_id);
-    		$catalogItem->theme_group = $set_response[0]->themeDetails['themeGroup'];
-    		$catalogItem->image_path = $full_image_path;
-    		$catalogItem->thumbnail_path = $thumbnail_image_path;
-    		$catalogItem->brickset_url = $set_response[0]->bricksetURL;
-    	}
+        $catalogItem->brickset_id = (int) $set->itemNumbers['setID'];
+        $catalogItem->set_number = $set->itemNumbers['number'];
+        $catalogItem->set_number_variant = (int) $set->itemNumbers['numberVariant'];
+        $catalogItem->name = $set->name;
+        $catalogItem->piece_count = (int) $set->pieces;
+        $catalogItem->minifig_count = empty($set->minifigs) ? 0 : $set->minifigs;
+        $catalogItem->retail_price = empty($set->prices['US']['retailPrice']) ? 0 : $set->prices['US']['retailPrice'];
+        $catalogItem->year = $set->year;
+        $catalogItem->theme_id = $this->getTheme($set->themeDetails['theme']);
+        $catalogItem->subtheme_id = $this->getSubTheme($set->themeDetails['subtheme'], $catalogItem->theme_id);
+        $catalogItem->theme_group = $set->themeDetails['themeGroup'];
+        $catalogItem->image_path = $full_image_path;
+        $catalogItem->thumbnail_path = $thumbnail_image_path;
+        $catalogItem->brickset_url = $set->bricksetURL;
 
         $catalogItem = $this->getBricklinkPrices($catalogItem);
     }
