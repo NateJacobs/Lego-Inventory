@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Observers\CatalogItemObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(CatalogItemObserver::class)]
 class CatalogItem extends Model
 {
     protected $fillable = [
@@ -48,12 +50,6 @@ class CatalogItem extends Model
     public function subtheme()
     {
         return $this->belongsTo('App\Models\Theme', 'subtheme_id', 'id');
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-        static::observe(CatalogItemObserver::class);
     }
 
     public function getTotalRetailPriceAttribute()

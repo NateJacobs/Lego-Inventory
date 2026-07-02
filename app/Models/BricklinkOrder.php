@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class BricklinkOrder extends Model
 {
-    public $dates = [
-        'purchase_date',
+    protected $casts = [
+        'purchase_date' => 'datetime',
     ];
 
     public $fillable = [

@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Observers\SetObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(SetObserver::class)]
 class Set extends Model
 {
-    public $dates = [
-        'purchase_date',
+    protected $casts = [
+        'purchase_date' => 'datetime',
     ];
 
     public function catalogItem()
@@ -24,11 +26,5 @@ class Set extends Model
     public function acquiredLocation()
     {
         return $this->belongsTo('App\Models\AcquiredLocation');
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-        static::observe(SetObserver::class);
     }
 }
