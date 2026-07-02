@@ -90,8 +90,7 @@ class CatalogItemObserver
         );
 
         if ( $price_response_new instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
-            // it is an error
-            // do nothing
+            Log::warning('BrickLink price lookup failed for '.$catalogItem->set_number.'-'.$catalogItem->set_number_variant.': '.$price_response_new->getMessage());
         } else {
             $price_response_used = $items->getPrice(
                 $catalogItem->set_number.'-'.$catalogItem->set_number_variant,

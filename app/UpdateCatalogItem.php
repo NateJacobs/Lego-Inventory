@@ -39,8 +39,7 @@ class UpdateCatalogItem
             );
 
             if ( $price_response_new instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
-                // it is an error
-                // do nothing
+                Log::warning('BrickLink price update failed for '.$catalogItem->bricklink_id.': '.$price_response_new->getMessage());
             } else {
                 $price_response_used = $items->getPrice(
                     $catalogItem->bricklink_id,
