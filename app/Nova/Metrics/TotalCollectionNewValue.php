@@ -15,18 +15,7 @@ class TotalCollectionNewValue extends Value
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\CatalogItem::join(
-            'sets', 'catalog_items.id', '=', 'sets.catalog_item_id'
-            )->get();
-        $sets_new = $sets->sum('current_value_new');
-
-        $bulk_brick = \App\Models\BulkBrick::all();
-        $bulk_new = $bulk_brick->sum('value');
-
-        $bricklink = \App\Models\BricklinkOrder::all();
-        $bricklink_new = $bricklink->sum('total_cost');
-
-        $result = new \Laravel\Nova\Metrics\ValueResult($sets_new + $bulk_new + $bricklink_new);
+        $result = new \Laravel\Nova\Metrics\ValueResult(app(\App\Services\CollectionValuation::class)->newValue());
         return $result->prefix('$')->format('0,0.00');
     }
 

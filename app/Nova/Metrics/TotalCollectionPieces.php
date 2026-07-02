@@ -15,18 +15,7 @@ class TotalCollectionPieces extends Value
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\CatalogItem::join(
-            'sets', 'catalog_items.id', '=', 'sets.catalog_item_id'
-            )->get();
-        $sets_count = $sets->sum('piece_count');
-
-        $bulk_brick = \App\Models\BulkBrick::all();
-        $bulk_count = $bulk_brick->sum('piece_count');
-
-        $bricklink = \App\Models\BricklinkOrder::all();
-        $bricklink_count = $bricklink->sum('pieces');
-
-        $result = new \Laravel\Nova\Metrics\ValueResult($sets_count + $bulk_count + $bricklink_count);
+        $result = new \Laravel\Nova\Metrics\ValueResult(app(\App\Services\CollectionValuation::class)->pieceCount());
         return $result->suffix('pieces')->format('0,0');
     }
 

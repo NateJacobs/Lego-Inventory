@@ -20,22 +20,7 @@ class TotalCollectionPiecePartition extends Partition
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\CatalogItem::join(
-            'sets', 'catalog_items.id', '=', 'sets.catalog_item_id'
-            )->get();
-        $sets_count = $sets->sum('piece_count');
-
-        $bulk_brick = \App\Models\BulkBrick::all();
-        $bulk_count = $bulk_brick->sum('piece_count');
-
-        $bricklink = \App\Models\BricklinkOrder::all();
-        $bricklink_count = $bricklink->sum('pieces');
-
-        return $this->result([
-            'Sets' => $sets_count,
-            'Bulk Brick' => $bulk_count,
-            'Bricklink' => $bricklink_count,
-        ]);
+        return $this->result(app(\App\Services\CollectionValuation::class)->pieceCountBreakdown());
     }
 
     /**

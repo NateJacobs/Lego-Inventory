@@ -15,8 +15,7 @@ class TotalSets extends Value
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\Set::all();
-        $result = new \Laravel\Nova\Metrics\ValueResult($sets->count());
+        $result = new \Laravel\Nova\Metrics\ValueResult(app(\App\Services\CollectionValuation::class)->totalSets());
         return $result->suffix('sets')->format('0,0');
     }
 

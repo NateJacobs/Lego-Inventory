@@ -15,18 +15,7 @@ class TotalCollectionUsedValue extends Value
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\CatalogItem::join(
-            'sets', 'catalog_items.id', '=', 'sets.catalog_item_id'
-            )->get();
-        $sets_used = $sets->sum('current_value_used');
-
-        $bulk_brick = \App\Models\BulkBrick::all();
-        $bulk_used = $bulk_brick->sum('value');
-
-        $bricklink = \App\Models\BricklinkOrder::all();
-        $bricklink_used = $bricklink->sum('total_cost');
-
-        $result = new \Laravel\Nova\Metrics\ValueResult($sets_used + $bulk_used + $bricklink_used);
+        $result = new \Laravel\Nova\Metrics\ValueResult(app(\App\Services\CollectionValuation::class)->usedValue());
         return $result->prefix('$')->format('0,0.00');
     }
 

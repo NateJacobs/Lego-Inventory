@@ -15,20 +15,7 @@ class CollectionRetailValue extends Value
      */
     public function calculate(Request $request)
     {
-        $sets = \App\Models\CatalogItem::join(
-            'sets', 'catalog_items.id', '=', 'sets.catalog_item_id'
-            )->get();
-        $sets_retail = $sets->sum('retail_price');
-
-        $bulk_brick = \App\Models\BulkBrick::all();
-        $bulk_retail = $bulk_brick->sum('value');
-
-        $bricklink = \App\Models\BricklinkOrder::all();
-        $bricklink_retail = $bricklink->sum('total_cost');
-
-        $total = $sets_retail + $bulk_retail + $bricklink_retail;
-
-        $result = new \Laravel\Nova\Metrics\ValueResult($total);
+        $result = new \Laravel\Nova\Metrics\ValueResult(app(\App\Services\CollectionValuation::class)->retailValue());
         return $result->currency('$');
     }
 
