@@ -20,7 +20,10 @@ class TotalBLValue extends Value
      */
     public function calculate(Request $request)
     {
-        $bricklink = \App\Models\BricklinkOrder::sum('total_cost');
+        // total_cost is a derived accessor (order_cost + shipping_cost), not a
+        // column, so sum the underlying columns rather than querying total_cost.
+        $bricklink = \App\Models\BricklinkOrder::sum('order_cost')
+            + \App\Models\BricklinkOrder::sum('shipping_cost');
 
         $result = new \Laravel\Nova\Metrics\ValueResult($bricklink);
         return $result->prefix('$')->format('0,0.00');

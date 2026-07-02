@@ -10,6 +10,10 @@ class BricklinkOrder extends Model
         'purchase_date' => 'datetime',
     ];
 
+    protected $appends = [
+        'total_cost',
+    ];
+
     public $fillable = [
         'purchase_date',
         'seller_name',
@@ -18,18 +22,16 @@ class BricklinkOrder extends Model
         'pieces',
         'order_cost',
         'shipping_cost',
-        'total_cost',
     ];
 
-    public static function boot()
+    /**
+     * The order's total cost, always derived from item cost plus shipping.
+     *
+     * Computed on read so it stays correct when an order is edited, and so it
+     * works without a dedicated (and easily-stale) total_cost column.
+     */
+    public function getTotalCostAttribute(): float
     {
-        parent::boot();
-
-        // calculate total cost of order before DB insert
-        static::creating(function ($item)  {
-			$item->total_cost = $item->order_cost + $item->shipping_cost;
-
-            return $item;
-        });
+        return (float) $this->order_cost + (float) $this->shipping_cost;
     }
 }
