@@ -2,32 +2,34 @@
 
 namespace App\Nova;
 
-use Laravel\Nova\Fields\ID;
 use Illuminate\Http\Request;
-use Laravel\Nova\Panel;
+use Laravel\Nova\Fields\DateTime;
+use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Text;
-use Laravel\Nova\Fields\Gravatar;
-use Laravel\Nova\Fields\HasMany;
-use Laravel\Nova\Fields\Password;
-use App\Nova\Actions\GenerateApiToken;
+use Laravel\Sanctum\PersonalAccessToken as PersonalAccessTokenModel;
 
-class User extends Resource
+class PersonalAccessToken extends Resource
 {
     /**
      * The model the resource corresponds to.
      *
      * @var string
      */
-    public static $model = 'App\\Models\\User';
-
-    public static $displayInNavigation = true;
+    public static $model = PersonalAccessTokenModel::class;
 
     /**
-     * The single value that should be used to represent the resource when being displayed.
+     * The single value that should be used to represent the resource.
      *
      * @var string
      */
     public static $title = 'name';
+
+    /**
+     * Tokens are managed through the User resource, not the main navigation.
+     *
+     * @var bool
+     */
+    public static $displayInNavigation = false;
 
     /**
      * The columns that should be searched.
@@ -35,7 +37,7 @@ class User extends Resource
      * @var array
      */
     public static $search = [
-        'id', 'name', 'email',
+        'id', 'name',
     ];
 
     /**
@@ -49,25 +51,28 @@ class User extends Resource
         return [
             ID::make()->sortable(),
 
-            Gravatar::make(),
+            Text::make('Name')->readonly(),
 
-            Text::make('Name')
-                ->sortable()
-                ->rules('required', 'max:255'),
+            Text::make('Abilities', function () {
+                return implode(', ', (array) $this->abilities);
+            }),
 
-            Text::make('Email')
-                ->sortable()
-                ->rules('required', 'email', 'max:254')
-                ->creationRules('unique:users,email')
-                ->updateRules('unique:users,email,{{resourceId}}'),
+            DateTime::make('Last Used At')->readonly(),
 
-            Password::make('Password')
-                ->onlyOnForms()
-                ->creationRules('required', 'string', 'min:6')
-                ->updateRules('nullable', 'string', 'min:6'),
-
-            HasMany::make('API Tokens', 'tokens', PersonalAccessToken::class),
+            DateTime::make('Created At')->readonly(),
         ];
+    }
+
+    /**
+     * Tokens must be created through the "Generate API Token" action so the
+     * plain-text value can be surfaced exactly once.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return bool
+     */
+    public static function authorizedToCreate(Request $request)
+    {
+        return false;
     }
 
     /**
@@ -111,8 +116,6 @@ class User extends Resource
      */
     public function actions(Request $request)
     {
-        return [
-            new GenerateApiToken,
-        ];
+        return [];
     }
 }
