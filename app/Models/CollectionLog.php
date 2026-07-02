@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class CollectionLog extends Model
 {
-    public $dates = [
-        'date',
+    protected $casts = [
+        'date' => 'date',
     ];
 
     public $fillable = [
@@ -17,5 +17,6 @@ class CollectionLog extends Model
         'new_value',
         'total_sets',
         'piece_count',
+        'notes',
     ];
 }
