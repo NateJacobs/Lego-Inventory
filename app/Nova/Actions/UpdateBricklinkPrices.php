@@ -2,6 +2,7 @@
 
 namespace App\Nova\Actions;
 
+use App\Exceptions\BricklinkPriceException;
 use App\UpdateCatalogItem;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,11 +25,23 @@ class UpdateBricklinkPrices extends Action
      */
     public function handle(ActionFields $fields, Collection $models)
     {
+        $updated = 0;
+        $failures = [];
+
         foreach ($models as $model) {
-            (new UpdateCatalogItem($model))->updateBricklink();
+            try {
+                (new UpdateCatalogItem($model))->updateBricklink();
+                $updated++;
+            } catch (BricklinkPriceException $e) {
+                $failures[] = $model->bricklink_id ?? $model->set_number;
+            }
         }
 
-        return Action::message('The Bricklink prices were updated.');
+        if (! empty($failures)) {
+            return Action::danger("Updated {$updated}. BrickLink lookup failed for: ".implode(', ', $failures));
+        }
+
+        return Action::message("Updated BrickLink prices for {$updated} set(s).");
     }
 
     /**
