@@ -103,27 +103,20 @@ class CatalogItemObserver
                 ]
             );
 
-            $new = trim(str_replace('$', '', $price_response_new[0]->aggregatePrices['averagePrice']));
-            $used = trim(str_replace('$', '', $price_response_used[0]->aggregatePrices['averagePrice']));
+            // Parse the formatted currency strings (e.g. "$3,075.44") into
+            // numbers by stripping everything except digits and the decimal
+            // point. The previous approach chopped the first two characters off
+            // any 6+ character price, which mangled every value with a
+            // thousands separator ("$3,075.44" became "75.44").
+            $new = (float) preg_replace('/[^0-9.]/', '', $price_response_new[0]->aggregatePrices['averagePrice']);
+            $used = (float) preg_replace('/[^0-9.]/', '', $price_response_used[0]->aggregatePrices['averagePrice']);
 
-            if ( strlen($new) >= 6 ) {
-                $new = trim(substr($new, 2));
-            } elseif ( strlen($new) <= 5 ) {
-                $new = trim($new);
-            }
-
-            if ( strlen($used) >= 6 ) {
-                $used = trim(substr($used, 2));
-            } elseif ( strlen($used) <= 5 ) {
-                $used = trim($used);
-            }
-
-            if ( '0.00' == $new && '0.00' == $used ) {
+            if ( 0.0 == $new && 0.0 == $used ) {
                 $new = $catalogItem->retail_price;
                 $used = $catalogItem->retail_price;
-            } elseif ( '0.00' == $new ) {
+            } elseif ( 0.0 == $new ) {
                 $new = $used;
-            } elseif ( '0.00' == $used ) {
+            } elseif ( 0.0 == $used ) {
                 $used = $new;
             }
 
