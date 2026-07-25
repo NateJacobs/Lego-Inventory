@@ -2,23 +2,18 @@
     "name": "natejacobs/lego-inventory",
     "type": "project",
     "description": "Your LEGO (R) Set Inventory.",
-    "keywords": [
-        "framework",
-        "laravel"
-    ],
+    "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
         "php": "^8.4",
-        "inspheric/nova-url-field": "^3.0",
+        "filament/filament": "^5.7",
         "laravel/framework": "^13.0",
-        "laravel/nova": "^5.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6",
         "league/csv": "^9.16",
         "natejacobs/mursten-stock": "dev-master",
-        "natejacobs/mursten-track": "dev-master",
-        "saumini/count": "^1.0"
+        "natejacobs/mursten-track": "dev-master"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -29,13 +24,8 @@
     },
     "repositories": [
         {
-            "name": "nova",
-            "type": "composer",
-            "url": "https://nova.laravel.com"
-        },
-        {
-          "type": "vcs",
-          "url": "https://github.com/NateJacobs/mursten-stock"
+            "type": "vcs",
+            "url": "https://github.com/NateJacobs/mursten-stock"
         },
         {
             "type": "vcs",
@@ -72,7 +62,8 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
-            "@php artisan nova:publish --ansi"
+            "@php artisan filament:assets --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

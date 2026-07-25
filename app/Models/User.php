@@ -2,14 +2,25 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, Notifiable;
+
+    /**
+     * Who may reach the Filament admin panel — mirrors the Nova viewNova gate:
+     * anyone in local, otherwise only the configured admin address.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return app()->environment('local') || $this->email === env('ADMIN_EMAIL');
+    }
 
     /**
      * The attributes that are mass assignable.
