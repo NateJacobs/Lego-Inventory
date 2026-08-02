@@ -11,6 +11,11 @@
 /storage/*.key
 /vendor
 /nova
+
+# Seed data is public. Only the shared reference tables listed in
+# ReferenceDataSeeder belong here — never the personal collection.
+/database/seeders/data/*
+!/database/seeders/data/themes.json
 .env
 .phpunit.result.cache
 .phpunit.cache
