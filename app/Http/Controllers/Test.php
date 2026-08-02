@@ -23,7 +23,7 @@ class Test extends Controller
      */
     public function __invoke(Request $request)
     {
-        $sets = CatalogItem::where('theme', 'The Hobbit')
+        $sets = CatalogItem::whereRelation('theme', 'name', 'The Hobbit')
             ->orderBy('set_number')
             ->withCount('sets')
             ->get();
