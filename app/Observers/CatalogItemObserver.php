@@ -5,9 +5,9 @@ namespace App\Observers;
 use App\Exceptions\BricksetLookupException;
 use App\Models\CatalogItem;
 use App\Models\Theme;
+use App\Services\BricklinkClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use NateJacobs\MurstenStock\Client as BLClient;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
 use NateJacobs\MurstenTrack\Resources\Set as BrickSetSearch;
 
@@ -82,15 +82,7 @@ class CatalogItemObserver
 
     protected function getBricklinkPrices($catalogItem)
     {
-        $client = new BLClient();
-        $client->setAuth([
-        	'consumer_key' => getenv('MURSTEN_STOCK_CONSUMER_KEY'),
-        	'consumer_secret' => getenv('MURSTEN_STOCK_CONSUMER_SECRET'),
-        	'token' => getenv('MURSTEN_STOCK_TOKEN'),
-        	'token_secret' => getenv('MURSTEN_STOCK_TOKEN_SECRET'),
-        ]);
-
-        $items = new BLPrice($client);
+        $items = new BLPrice(BricklinkClient::make());
 
         $price_response_new = $items->getPrice(
             $catalogItem->set_number.'-'.$catalogItem->set_number_variant,

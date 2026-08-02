@@ -3,15 +3,15 @@
 namespace App;
 
 use App\Exceptions\BricklinkPriceException;
-use NateJacobs\MurstenStock\Client as BLClient;
+use App\Models\CatalogItem;
+use App\Services\BricklinkClient;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
 
 class UpdateCatalogItem
 {
-    public function __construct($model)
-    {
-        $this->model = $model;
-    }
+    // Declared rather than assigned on the fly: PHP 8.2 deprecated dynamic
+    // properties, and this ran on 8.4.
+    public function __construct(protected CatalogItem $model) {}
 
     public function updateBricklink()
     {
@@ -21,15 +21,7 @@ class UpdateCatalogItem
             return;
         }
 
-        $client = new BLClient();
-        $client->setAuth([
-        	'consumer_key' => getenv('MURSTEN_STOCK_CONSUMER_KEY'),
-        	'consumer_secret' => getenv('MURSTEN_STOCK_CONSUMER_SECRET'),
-        	'token' => getenv('MURSTEN_STOCK_TOKEN'),
-        	'token_secret' => getenv('MURSTEN_STOCK_TOKEN_SECRET'),
-        ]);
-
-        $items = new BLPrice($client);
+        $items = new BLPrice(BricklinkClient::make());
 
         $price_response_new = $this->fetchPrice($items, $catalogItem, 'N');
         $price_response_used = $this->fetchPrice($items, $catalogItem, 'U');

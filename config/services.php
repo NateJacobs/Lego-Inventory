@@ -46,13 +46,22 @@ return [
 
     /*
     | Brickset, used to mirror how many copies of a set are owned back to the
-    | Brickset collection. Read through the config rather than getenv() so the
-    | value survives `php artisan config:cache`, which stops the .env file from
-    | being loaded at all.
+    | Brickset collection, and BrickLink, used to price them.
+    |
+    | Both are read through the config rather than getenv() so the values
+    | survive `php artisan config:cache`, which stops the .env file from being
+    | loaded at all and would otherwise leave every credential empty.
     */
 
     'brickset' => [
         'user_hash' => env('MURSTEN_TRACK_USER_HASH'),
+    ],
+
+    'bricklink' => [
+        'consumer_key' => env('MURSTEN_STOCK_CONSUMER_KEY'),
+        'consumer_secret' => env('MURSTEN_STOCK_CONSUMER_SECRET'),
+        'token' => env('MURSTEN_STOCK_TOKEN'),
+        'token_secret' => env('MURSTEN_STOCK_TOKEN_SECRET'),
     ],
 
 ];

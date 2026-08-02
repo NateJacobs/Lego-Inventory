@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use League\Csv\Reader;
 use League\Csv\Statement;
 use NateJacobs\MurstenTrack\Resources\Set as SetSearch;
-use NateJacobs\MurstenStock\Client as BLClient;
+use App\Services\BricklinkClient;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
 
 class Test extends Controller
@@ -34,16 +34,7 @@ class Test extends Controller
 
     public function bricklink()
     {
-        $client = new BLClient();
-
-        $client->setAuth([
-        	'consumer_key' => getenv('MURSTEN_STOCK_CONSUMER_KEY'),
-        	'consumer_secret' => getenv('MURSTEN_STOCK_CONSUMER_SECRET'),
-        	'token' => getenv('MURSTEN_STOCK_TOKEN'),
-        	'token_secret' => getenv('MURSTEN_STOCK_TOKEN_SECRET'),
-        ]);
-
-        $items = new BLPrice($client);
+        $items = new BLPrice(BricklinkClient::make());
 
         $price_response_new = $items->getPrice(
             '75827-1',
@@ -64,16 +55,8 @@ class Test extends Controller
 
     public function bricklinkSample()
     {
-        $client = new BLClient();
-        $client->setAuth([
-        	'consumer_key' => getenv('MURSTEN_STOCK_CONSUMER_KEY'),
-        	'consumer_secret' => getenv('MURSTEN_STOCK_CONSUMER_SECRET'),
-        	'token' => getenv('MURSTEN_STOCK_TOKEN'),
-        	'token_secret' => getenv('MURSTEN_STOCK_TOKEN_SECRET'),
-        ]);
-
         $sets = CatalogItem::whereNull('current_value_new')->get();
-        $items = new BLPrice($client);
+        $items = new BLPrice(BricklinkClient::make());
 
         foreach($sets as $set) {
             $number = $set->set_number .'-'. $set->set_number_variant;
