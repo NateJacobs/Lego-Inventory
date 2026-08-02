@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCollectionLogsTable extends Migration
 {
     /**
-     * Run the migrations.
+     * A dated snapshot of what the whole collection is worth, written monthly
+     * by collection:snapshot. These are sums across every set, bulk lot and
+     * order, so they get more headroom than the per-item money columns.
      *
      * @return void
      */
@@ -15,13 +17,13 @@ class CreateCollectionLogsTable extends Migration
     {
         Schema::create('collection_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->date('date');
-            $table->float('used_value', 8, 2);
-            $table->float('new_value', 8, 2);
-            $table->float('retail_value', 8, 2);
+            $table->date('date')->nullable();
+            $table->decimal('retail_value', 12, 2)->nullable();
+            $table->decimal('used_value', 12, 2);
+            $table->decimal('new_value', 12, 2);
             $table->integer('total_sets');
             $table->integer('piece_count');
-            $table->text('notes');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateBricklinkOrdersTable extends Migration
 {
     /**
-     * Run the migrations.
+     * Parts orders placed through BrickLink. order_cost and shipping_cost are
+     * optional because older orders were only ever recorded as a single total;
+     * total_cost is what the collection valuation actually reads.
      *
      * @return void
      */
@@ -17,12 +19,15 @@ class CreateBricklinkOrdersTable extends Migration
             $table->bigIncrements('id');
             $table->date('purchase_date');
             $table->string('seller_name', 255);
-            $table->string('store_name', 255);
-            $table->integer('order_number');
+            $table->string('store_name', 255)->nullable()->default('');
+            // BrickLink order numbers are wider than a signed int.
+            $table->bigInteger('order_number');
             $table->integer('pieces');
-            $table->float('order_cost', 8, 2);
-            $table->float('shipping_cost', 8, 2);
-            $table->json('details');
+            $table->decimal('order_cost', 10, 2)->nullable();
+            $table->decimal('shipping_cost', 10, 2)->nullable();
+            $table->decimal('total_cost', 10, 2);
+            $table->json('details')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

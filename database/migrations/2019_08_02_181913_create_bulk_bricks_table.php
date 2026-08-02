@@ -1,13 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateBulkBricksTable extends Migration
 {
     /**
-     * Run the migrations.
+     * Loose bricks bought by weight or by the lot, rather than as a set. Every
+     * lot is entered by hand, so all of it is required.
      *
      * @return void
      */
@@ -15,9 +16,12 @@ class CreateBulkBricksTable extends Migration
     {
         Schema::create('bulk_bricks', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('type', 25);
-            $table->float('brick_price', 8, 2);
-            $table->float('value', 8, 2);
+            $table->bigInteger('acquired_location_id');
+            $table->integer('piece_count');
+            $table->decimal('cost', 10, 2);
+            $table->decimal('value', 10, 2);
+            $table->date('acquired_date');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

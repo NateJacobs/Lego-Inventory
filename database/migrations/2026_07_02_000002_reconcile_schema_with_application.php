@@ -7,30 +7,26 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * The application's models and Nova resources drifted ahead of the
-     * committed migrations: they reference columns that were only ever added to
-     * the production database by hand, and they leave some NOT NULL columns
-     * unset, so inserts are rejected under strict SQL mode. This migration
-     * brings a freshly-migrated schema in line with what the code expects.
+     * Adds the columns that were once only ever created by hand on the live
+     * database, for any environment still missing them.
      *
-     * Every column add is guarded with hasColumn so it is a no-op on a database
-     * that already has the column (i.e. production). Relaxing a column to
-     * nullable is likewise safe to run against an already-nullable column.
+     * The create_* migrations now describe the real schema directly, so on a
+     * freshly migrated database every check below is a no-op. What this
+     * migration must not do is alter types or nullability: that is what pulled
+     * a fresh schema away from the real one in the first place, and it is now
+     * handled once, in 2026_08_02_000001_align_schema_with_database.
      */
     public function up(): void
     {
-        // Sets resource shows/searches a Notes field.
         Schema::table('sets', function (Blueprint $table) {
             if (! Schema::hasColumn('sets', 'notes')) {
                 $table->text('notes')->nullable();
             }
         });
 
-        // BulkBrick model/resource use cost, acquired_date, notes and an
-        // acquired_location relation; type/brick_price are never entered.
         Schema::table('bulk_bricks', function (Blueprint $table) {
             if (! Schema::hasColumn('bulk_bricks', 'cost')) {
-                $table->decimal('cost', 10, 2)->nullable()->after('value');
+                $table->decimal('cost', 10, 2)->nullable();
             }
             if (! Schema::hasColumn('bulk_bricks', 'acquired_date')) {
                 $table->date('acquired_date')->nullable();
@@ -39,27 +35,17 @@ return new class extends Migration
                 $table->text('notes')->nullable();
             }
             if (! Schema::hasColumn('bulk_bricks', 'acquired_location_id')) {
-                $table->unsignedBigInteger('acquired_location_id')->nullable();
+                $table->bigInteger('acquired_location_id')->nullable();
             }
-
-            $table->string('type', 25)->nullable()->change();
-            $table->float('brick_price')->nullable()->change();
         });
 
-        // BricklinkOrder resource shows a Notes field; Details is disabled.
         Schema::table('bricklink_orders', function (Blueprint $table) {
             if (! Schema::hasColumn('bricklink_orders', 'notes')) {
                 $table->text('notes')->nullable();
             }
-
-            $table->longText('details')->nullable()->change();
-        });
-
-        // StorageLocation resource only captures the name.
-        Schema::table('storage_locations', function (Blueprint $table) {
-            $table->string('city', 100)->nullable()->change();
-            $table->string('state', 15)->nullable()->change();
-            $table->integer('zip_code')->nullable()->change();
+            if (! Schema::hasColumn('bricklink_orders', 'total_cost')) {
+                $table->decimal('total_cost', 10, 2)->nullable();
+            }
         });
     }
 
@@ -72,19 +58,19 @@ return new class extends Migration
         });
 
         Schema::table('bulk_bricks', function (Blueprint $table) {
-            foreach (['cost', 'acquired_date', 'notes', 'acquired_location_id'] as $col) {
-                if (Schema::hasColumn('bulk_bricks', $col)) {
-                    $table->dropColumn($col);
+            foreach (['cost', 'acquired_date', 'notes', 'acquired_location_id'] as $column) {
+                if (Schema::hasColumn('bulk_bricks', $column)) {
+                    $table->dropColumn($column);
                 }
             }
         });
 
         Schema::table('bricklink_orders', function (Blueprint $table) {
-            if (Schema::hasColumn('bricklink_orders', 'notes')) {
-                $table->dropColumn('notes');
+            foreach (['notes', 'total_cost'] as $column) {
+                if (Schema::hasColumn('bricklink_orders', $column)) {
+                    $table->dropColumn($column);
+                }
             }
         });
-
-        // Nullability relaxations are left in place on rollback.
     }
 };
