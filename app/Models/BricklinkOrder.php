@@ -10,10 +10,11 @@ class BricklinkOrder extends Model
         'purchase_date' => 'datetime',
     ];
 
-    protected $appends = [
-        'total_cost',
-    ];
-
+    /**
+     * total_cost is stored, not derived. Orders placed before 2005 only ever
+     * recorded a total — their order_cost and shipping_cost are both zero — so
+     * computing the total from those two would discard what was actually paid.
+     */
     public $fillable = [
         'purchase_date',
         'seller_name',
@@ -22,16 +23,8 @@ class BricklinkOrder extends Model
         'pieces',
         'order_cost',
         'shipping_cost',
+        'total_cost',
+        'details',
+        'notes',
     ];
-
-    /**
-     * The order's total cost, always derived from item cost plus shipping.
-     *
-     * Computed on read so it stays correct when an order is edited, and so it
-     * works without a dedicated (and easily-stale) total_cost column.
-     */
-    public function getTotalCostAttribute(): float
-    {
-        return (float) $this->order_cost + (float) $this->shipping_cost;
-    }
 }

@@ -9,6 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 #[ObservedBy(SetObserver::class)]
 class Set extends Model
 {
+    protected $fillable = [
+        'catalog_item_id',
+        'storage_location_id',
+        'acquired_location_id',
+        'purchase_price',
+        'purchase_date',
+        'current_condition',
+        'notes',
+    ];
+
     protected $casts = [
         'purchase_date' => 'datetime',
     ];

@@ -12,24 +12,32 @@ class BulkBrickForm
 {
     public static function configure(Schema $schema): Schema
     {
+        // A bulk lot is entered entirely by hand and every column but the note
+        // is NOT NULL, so all of them are required here.
         return $schema
             ->components([
-                TextInput::make('type'),
-                TextInput::make('piece_count')
-                    ->label('Pieces')
-                    ->numeric(),
-                TextInput::make('cost')
-                    ->numeric()
-                    ->prefix('$'),
-                TextInput::make('value')
-                    ->numeric()
-                    ->prefix('$')
-                    ->required(),
-                DatePicker::make('acquired_date'),
                 Select::make('acquired_location_id')
                     ->label('Acquired from')
                     ->relationship('acquiredLocation', 'name')
-                    ->searchable(),
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+                DatePicker::make('acquired_date')
+                    ->required(),
+                TextInput::make('piece_count')
+                    ->label('Pieces')
+                    ->numeric()
+                    ->required(),
+                TextInput::make('cost')
+                    ->label('Cost')
+                    ->numeric()
+                    ->prefix('$')
+                    ->required(),
+                TextInput::make('value')
+                    ->label('Value')
+                    ->numeric()
+                    ->prefix('$')
+                    ->required(),
                 MarkdownEditor::make('notes')
                     ->columnSpanFull(),
             ]);

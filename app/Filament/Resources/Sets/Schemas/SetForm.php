@@ -27,16 +27,18 @@ class SetForm
                         'misb' => 'MISB',
                     ])
                     ->required(),
+                // Both are nullable: older copies predate ever recording where
+                // they live or where they came from.
                 Select::make('storage_location_id')
                     ->label('Storage location')
                     ->relationship('storageLocation', 'name')
                     ->searchable()
-                    ->required(),
+                    ->preload(),
                 Select::make('acquired_location_id')
                     ->label('Acquired from')
                     ->relationship('acquiredLocation', 'name')
                     ->searchable()
-                    ->required(),
+                    ->preload(),
                 TextInput::make('purchase_price')
                     ->numeric()
                     ->prefix('$'),

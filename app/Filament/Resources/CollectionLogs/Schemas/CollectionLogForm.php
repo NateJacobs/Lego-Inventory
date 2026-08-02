@@ -13,17 +13,19 @@ class CollectionLogForm
     {
         return $schema
             ->components([
-                DatePicker::make('date')
-                    ->required(),
+                DatePicker::make('date'),
                 TextInput::make('used_value')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('$'),
                 TextInput::make('new_value')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('$'),
+                // Nullable: the oldest snapshots never recorded a retail total.
                 TextInput::make('retail_value')
-                    ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('$'),
                 TextInput::make('total_sets')
                     ->required()
                     ->numeric(),

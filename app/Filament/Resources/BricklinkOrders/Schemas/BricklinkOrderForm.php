@@ -18,18 +18,23 @@ class BricklinkOrderForm
                 TextInput::make('seller_name')
                     ->required(),
                 TextInput::make('store_name')
-                    ->required(),
+                    ->helperText('Blank for a seller without a storefront.'),
                 TextInput::make('order_number')
                     ->required()
                     ->numeric(),
                 TextInput::make('pieces')
                     ->required()
                     ->numeric(),
+                // The breakdown is optional — older orders only ever recorded a
+                // total — but the total itself is what the collection value uses.
                 TextInput::make('order_cost')
-                    ->required()
                     ->numeric()
                     ->prefix('$'),
                 TextInput::make('shipping_cost')
+                    ->numeric()
+                    ->prefix('$'),
+                TextInput::make('total_cost')
+                    ->label('Total paid')
                     ->required()
                     ->numeric()
                     ->prefix('$'),

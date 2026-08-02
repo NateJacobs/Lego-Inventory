@@ -9,17 +9,21 @@ class StorageLocationForm
 {
     public static function configure(Schema $schema): Schema
     {
+        // All four columns are NOT NULL, so leaving the address blank had the
+        // database reject the record rather than saving a partial location.
         return $schema
             ->components([
                 TextInput::make('name')
                     ->required(),
                 TextInput::make('city')
-                    ->default(null),
+                    ->maxLength(100)
+                    ->required(),
                 TextInput::make('state')
-                    ->default(null),
+                    ->maxLength(15)
+                    ->required(),
                 TextInput::make('zip_code')
                     ->numeric()
-                    ->default(null),
+                    ->required(),
             ]);
     }
 }
