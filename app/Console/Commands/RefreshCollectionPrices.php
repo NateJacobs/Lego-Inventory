@@ -4,9 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\RefreshCatalogItemPrice;
 use App\Models\CatalogItem;
-use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
 
 class RefreshCollectionPrices extends Command
@@ -19,7 +17,7 @@ class RefreshCollectionPrices extends Command
     /**
      * @var string
      */
-    protected $description = 'Queue a BrickLink price refresh for every owned set, then snapshot the collection value';
+    protected $description = 'Queue a BrickLink price refresh for every owned set';
 
     public function handle(): int
     {
@@ -38,15 +36,13 @@ class RefreshCollectionPrices extends Command
         )
             ->name('Collection price refresh')
             ->allowFailures()
-            ->finally(function (Batch $batch) {
-                // Record the collection's value once every price has been
-                // attempted, regardless of individual failures.
-                Artisan::call('collection:snapshot');
-            })
             ->dispatch();
 
+        // Deliberately no snapshot on completion: the collection log holds one
+        // entry per month, written by the scheduled collection:snapshot on the
+        // last day. A batch-completion snapshot would add a second, extra entry
+        // dated whenever the batch happened to finish.
         $this->info("Queued a BrickLink price refresh for {$items->count()} sets (batch {$batch->id}).");
-        $this->line('A collection value snapshot will be recorded when the batch finishes.');
 
         return self::SUCCESS;
     }

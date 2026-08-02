@@ -24,16 +24,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Refresh every owned set's BrickLink price once a month and snapshot
-        // the collection's value when the batch finishes. The batch throttles
-        // itself, so it may run for a day or two on large collections.
+        // Refresh every owned set's BrickLink price near the end of the month,
+        // so the snapshot below records current prices. The batch throttles
+        // itself to 2,000 jobs a day and retries for up to three, so starting
+        // on the 24th leaves it enough room to finish even in February.
         $schedule->command('collection:refresh-prices')
-                 ->monthlyOn(1, '02:00')
+                 ->monthlyOn(24, '02:00')
                  ->withoutOverlapping();
 
-        // Close out each month with its own entry in the collection log. Run
-        // late on the last day so the date recorded is that month, not the
-        // next one — the command dates the snapshot by the day it runs.
+        // The collection log holds exactly one entry per month: this snapshot,
+        // taken late on the last day. Running it at 23:00 keeps the entry dated
+        // within the month it covers, since the command dates the snapshot by
+        // the day it runs.
         $schedule->command('collection:snapshot')
                  ->lastDayOfMonth('23:00')
                  ->withoutOverlapping();
