@@ -30,6 +30,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('collection:refresh-prices')
                  ->monthlyOn(1, '02:00')
                  ->withoutOverlapping();
+
+        // Close out each month with its own entry in the collection log. Run
+        // late on the last day so the date recorded is that month, not the
+        // next one — the command dates the snapshot by the day it runs.
+        $schedule->command('collection:snapshot')
+                 ->lastDayOfMonth('23:00')
+                 ->withoutOverlapping();
     }
 
     /**
