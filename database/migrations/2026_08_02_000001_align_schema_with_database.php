@@ -19,45 +19,63 @@ return new class extends Migration
      * express the double(8,2) the database happened to be using, so the two
      * could never have been described by the same migration. decimal is exact
      * and covers the same range.
+     *
+     * Every step checks the column exists first. Environments reached this
+     * point by different routes — some columns were only ever added by hand —
+     * and a migration that assumes one of them is present fails halfway,
+     * leaving the schema in a state no later migration expects.
      */
     public function up(): void
     {
         // Per-item money: prices, costs and values of a single thing.
-        Schema::table('catalog_items', function (Blueprint $table) {
-            $table->decimal('retail_price', 10, 2)->nullable()->change();
-            $table->decimal('current_value_used', 10, 2)->nullable()->change();
-            $table->decimal('current_value_new', 10, 2)->nullable()->change();
-        });
+        $this->change('catalog_items', [
+            'retail_price' => fn (Blueprint $table) => $table->decimal('retail_price', 10, 2)->nullable()->change(),
+            'current_value_used' => fn (Blueprint $table) => $table->decimal('current_value_used', 10, 2)->nullable()->change(),
+            'current_value_new' => fn (Blueprint $table) => $table->decimal('current_value_new', 10, 2)->nullable()->change(),
+        ]);
 
-        Schema::table('sets', function (Blueprint $table) {
-            $table->decimal('purchase_price', 10, 2)->nullable()->default(0)->change();
-        });
+        $this->change('sets', [
+            'purchase_price' => fn (Blueprint $table) => $table->decimal('purchase_price', 10, 2)->nullable()->default(0)->change(),
+        ]);
 
         $this->backfill('bulk_bricks', ['cost' => 0, 'value' => 0, 'piece_count' => 0]);
 
-        Schema::table('bulk_bricks', function (Blueprint $table) {
-            $table->decimal('cost', 10, 2)->change();
-            $table->decimal('value', 10, 2)->change();
-        });
+        $this->change('bulk_bricks', [
+            'cost' => fn (Blueprint $table) => $table->decimal('cost', 10, 2)->change(),
+            'value' => fn (Blueprint $table) => $table->decimal('value', 10, 2)->change(),
+        ]);
+
+        // total_cost only ever reached some databases by hand. Create it where
+        // it is missing rather than assuming an earlier migration did, and seed
+        // it from the breakdown so the column can be made NOT NULL below.
+        if (! Schema::hasColumn('bricklink_orders', 'total_cost')) {
+            Schema::table('bricklink_orders', function (Blueprint $table) {
+                $table->decimal('total_cost', 10, 2)->nullable()->after('shipping_cost');
+            });
+
+            DB::table('bricklink_orders')->update([
+                'total_cost' => DB::raw('COALESCE(order_cost, 0) + COALESCE(shipping_cost, 0)'),
+            ]);
+        }
 
         $this->backfill('bricklink_orders', ['total_cost' => 0]);
 
-        Schema::table('bricklink_orders', function (Blueprint $table) {
-            $table->decimal('order_cost', 10, 2)->nullable()->change();
-            $table->decimal('shipping_cost', 10, 2)->nullable()->change();
-            $table->decimal('total_cost', 10, 2)->change();
+        $this->change('bricklink_orders', [
+            'order_cost' => fn (Blueprint $table) => $table->decimal('order_cost', 10, 2)->nullable()->change(),
+            'shipping_cost' => fn (Blueprint $table) => $table->decimal('shipping_cost', 10, 2)->nullable()->change(),
+            'total_cost' => fn (Blueprint $table) => $table->decimal('total_cost', 10, 2)->change(),
             // Orders bought direct from a seller have no store name.
-            $table->string('store_name', 255)->nullable()->default('')->change();
-        });
+            'store_name' => fn (Blueprint $table) => $table->string('store_name', 255)->nullable()->default('')->change(),
+        ]);
 
         // Collection totals: sums across everything, so wider than the above.
         $this->backfill('collection_logs', ['used_value' => 0, 'new_value' => 0]);
 
-        Schema::table('collection_logs', function (Blueprint $table) {
-            $table->decimal('retail_value', 12, 2)->nullable()->change();
-            $table->decimal('used_value', 12, 2)->change();
-            $table->decimal('new_value', 12, 2)->change();
-        });
+        $this->change('collection_logs', [
+            'retail_value' => fn (Blueprint $table) => $table->decimal('retail_value', 12, 2)->nullable()->change(),
+            'used_value' => fn (Blueprint $table) => $table->decimal('used_value', 12, 2)->change(),
+            'new_value' => fn (Blueprint $table) => $table->decimal('new_value', 12, 2)->change(),
+        ]);
 
         // Created by the original migration but never used by the application,
         // and long since gone from the live database.
@@ -66,6 +84,30 @@ return new class extends Migration
                 if (Schema::hasColumn('bulk_bricks', $column)) {
                     $table->dropColumn($column);
                 }
+            }
+        });
+    }
+
+    /**
+     * Apply each definition, skipping any column this database does not have.
+     *
+     * @param  array<string, callable(Blueprint): mixed>  $columns
+     */
+    protected function change(string $table, array $columns): void
+    {
+        $present = array_filter(
+            $columns,
+            fn (string $column): bool => Schema::hasColumn($table, $column),
+            ARRAY_FILTER_USE_KEY,
+        );
+
+        if ($present === []) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($present): void {
+            foreach ($present as $definition) {
+                $definition($blueprint);
             }
         });
     }
