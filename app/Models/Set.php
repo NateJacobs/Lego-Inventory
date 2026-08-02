@@ -5,10 +5,15 @@ namespace App\Models;
 use App\Observers\SetObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy(SetObserver::class)]
 class Set extends Model
 {
+    // The table has always carried deleted_at, but without this trait a delete
+    // was permanent — an accidental click destroyed an owned copy outright.
+    use SoftDeletes;
+
     protected $fillable = [
         'catalog_item_id',
         'storage_location_id',

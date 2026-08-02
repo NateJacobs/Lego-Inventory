@@ -94,7 +94,12 @@ class CollectionValuation
      */
     protected function ownedSetsSum(string $column): float
     {
+        // Set is soft-deleted, but a join reaches the table directly and so
+        // never picks up that global scope. Without the whereNull, a trashed
+        // copy would keep contributing to the value while totalSets(), which
+        // does go through the model, had already stopped counting it.
         return (float) CatalogItem::join('sets', 'catalog_items.id', '=', 'sets.catalog_item_id')
+            ->whereNull('sets.deleted_at')
             ->sum('catalog_items.'.$column);
     }
 

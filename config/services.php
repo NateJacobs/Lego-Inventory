@@ -44,4 +44,15 @@ return [
         ],
     ],
 
+    /*
+    | Brickset, used to mirror how many copies of a set are owned back to the
+    | Brickset collection. Read through the config rather than getenv() so the
+    | value survives `php artisan config:cache`, which stops the .env file from
+    | being loaded at all.
+    */
+
+    'brickset' => [
+        'user_hash' => env('MURSTEN_TRACK_USER_HASH'),
+    ],
+
 ];

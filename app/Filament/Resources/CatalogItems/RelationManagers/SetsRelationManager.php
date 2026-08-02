@@ -7,6 +7,10 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\Select;
@@ -14,6 +18,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 /**
@@ -112,6 +117,9 @@ class SetsRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('purchase_date', 'desc')
+            ->filters([
+                TrashedFilter::make(),
+            ])
             ->headerActions([
                 CreateAction::make()
                     ->label('Add copy'),
@@ -119,9 +127,13 @@ class SetsRelationManager extends RelationManager
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+                RestoreAction::make(),
+                ForceDeleteAction::make(),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),
+                RestoreBulkAction::make(),
+                ForceDeleteBulkAction::make(),
             ]);
     }
 }

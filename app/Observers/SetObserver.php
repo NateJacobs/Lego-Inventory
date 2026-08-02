@@ -3,49 +3,73 @@
 namespace App\Observers;
 
 use App\Models\Set;
+use Illuminate\Support\Facades\Log;
 use NateJacobs\MurstenTrack\Resources\Set as BrickSetSearch;
+use Throwable;
 
 class SetObserver
 {
-    /**
-     * Handle the set "created" event.
-     *
-     * @param  \App\Set  $set
-     * @return void
-     */
-    public function created(Set $set)
+    public function created(Set $set): void
     {
-        $sets = Set::where('catalog_item_id', $set->catalog_item_id)->get();
+        $this->syncOwnedQuantity($set);
+    }
 
-        $brickset = new BrickSetSearch();
+    public function deleted(Set $set): void
+    {
+        $this->syncOwnedQuantity($set);
+    }
 
-        $brickset->setCollectionQuantity(
-            $set->catalogItem->brickset_id,
-            [
-                'userHash' => getEnv('MURSTEN_TRACK_USER_HASH'),
-                'qtyOwned' => $sets->count(),
-            ]
-        );
+    public function restored(Set $set): void
+    {
+        $this->syncOwnedQuantity($set);
     }
 
     /**
-     * Handle the set "deleted" event.
+     * Push the number of copies owned to the Brickset collection.
      *
-     * @param  \App\Set  $set
-     * @return void
+     * This mirrors local state to a third-party service, so it is best-effort:
+     * a set that has no Brickset id, a missing user hash, or an API that is
+     * slow, down or rejecting us must not stop the copy being recorded here.
+     * Previously any of those aborted the save outright.
      */
-    public function deleted(Set $set)
+    protected function syncOwnedQuantity(Set $set): void
     {
-        $sets = Set::where('catalog_item_id', $set->catalog_item_id)->get();
+        $bricksetId = $set->catalogItem?->brickset_id;
 
-        $brickset = new BrickSetSearch();
+        if (empty($bricksetId)) {
+            Log::info('Skipped Brickset quantity sync: no Brickset id.', [
+                'set_id' => $set->id,
+                'catalog_item_id' => $set->catalog_item_id,
+            ]);
 
-        $brickset->setCollectionQuantity(
-            $set->catalogItem->brickset_id,
-            [
-                'userHash' => getEnv('MURSTEN_TRACK_USER_HASH'),
-                'qtyOwned' => $sets->count(),
-            ]
-        );
+            return;
+        }
+
+        $userHash = config('services.brickset.user_hash');
+
+        if (empty($userHash)) {
+            Log::info('Skipped Brickset quantity sync: no user hash configured.', [
+                'set_id' => $set->id,
+            ]);
+
+            return;
+        }
+
+        // Counted through the model, so trashed copies are already excluded.
+        $quantity = Set::where('catalog_item_id', $set->catalog_item_id)->count();
+
+        try {
+            (new BrickSetSearch)->setCollectionQuantity($bricksetId, [
+                'userHash' => $userHash,
+                'qtyOwned' => $quantity,
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Brickset quantity sync failed.', [
+                'brickset_id' => $bricksetId,
+                'catalog_item_id' => $set->catalog_item_id,
+                'quantity' => $quantity,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
