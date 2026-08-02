@@ -58,6 +58,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin Email
+    |--------------------------------------------------------------------------
+    |
+    | The email address allowed into the Filament panel outside of local
+    | development. This has to be read through the config rather than env()
+    | directly: `php artisan config:cache` stops the .env file from being
+    | loaded at all, so env() would return null on a deployed server and lock
+    | everyone out of the panel.
+    |
+    */
+
+    'admin_email' => env('ADMIN_EMAIL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
