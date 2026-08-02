@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CatalogItems\Pages;
 
 use App\Filament\Resources\CatalogItems\CatalogItemResource;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditCatalogItem extends EditRecord
@@ -13,6 +14,7 @@ class EditCatalogItem extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            ViewAction::make(),
             DeleteAction::make(),
         ];
     }

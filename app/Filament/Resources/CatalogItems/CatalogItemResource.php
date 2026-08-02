@@ -5,7 +5,10 @@ namespace App\Filament\Resources\CatalogItems;
 use App\Filament\Resources\CatalogItems\Pages\CreateCatalogItem;
 use App\Filament\Resources\CatalogItems\Pages\EditCatalogItem;
 use App\Filament\Resources\CatalogItems\Pages\ListCatalogItems;
+use App\Filament\Resources\CatalogItems\Pages\ViewCatalogItem;
+use App\Filament\Resources\CatalogItems\RelationManagers\SetsRelationManager;
 use App\Filament\Resources\CatalogItems\Schemas\CatalogItemForm;
+use App\Filament\Resources\CatalogItems\Schemas\CatalogItemInfolist;
 use App\Filament\Resources\CatalogItems\Tables\CatalogItemsTable;
 use App\Models\CatalogItem;
 use BackedEnum;
@@ -25,6 +28,11 @@ class CatalogItemResource extends Resource
         return CatalogItemForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return CatalogItemInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return CatalogItemsTable::configure($table);
@@ -33,7 +41,7 @@ class CatalogItemResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SetsRelationManager::class,
         ];
     }
 
@@ -42,6 +50,7 @@ class CatalogItemResource extends Resource
         return [
             'index' => ListCatalogItems::route('/'),
             'create' => CreateCatalogItem::route('/create'),
+            'view' => ViewCatalogItem::route('/{record}'),
             'edit' => EditCatalogItem::route('/{record}/edit'),
         ];
     }
