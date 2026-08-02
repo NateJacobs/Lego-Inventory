@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * Who may reach the Filament admin panel — mirrors the Nova viewNova gate:
