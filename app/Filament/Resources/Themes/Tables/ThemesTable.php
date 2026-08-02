@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Themes\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -21,14 +22,24 @@ class ThemesTable
                     ->label('Parent theme')
                     ->placeholder('Top-level')
                     ->sortable(),
+                // A top-level theme holds its sets through theme_id and a
+                // subtheme through subtheme_id, so show both rather than one
+                // column that reads zero for every subtheme.
                 TextColumn::make('catalog_items_count')
                     ->label('Sets')
                     ->counts('catalogItems')
-                    ->badge(),
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('subtheme_catalog_items_count')
+                    ->label('Sets as subtheme')
+                    ->counts('subthemeCatalogItems')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('subthemes_count')
                     ->label('Subthemes')
                     ->counts('subthemes')
-                    ->badge(),
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -41,7 +52,9 @@ class ThemesTable
             ->filters([
                 //
             ])
+            ->defaultSort('name')
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
