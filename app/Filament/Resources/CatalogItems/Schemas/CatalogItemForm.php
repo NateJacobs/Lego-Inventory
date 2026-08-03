@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CatalogItems\Schemas;
 
+use App\Models\Theme;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -40,10 +41,13 @@ class CatalogItemForm
                         TextInput::make('year')->disabled(),
                         TextInput::make('piece_count')->numeric()->disabled(),
                         TextInput::make('minifig_count')->numeric()->disabled(),
+                        // A set records its most specific theme, so show where
+                        // that sits rather than a bare "General".
                         Select::make('theme_id')->label('Theme')
-                            ->relationship('theme', 'name')->disabled(),
-                        Select::make('subtheme_id')->label('Subtheme')
-                            ->relationship('subtheme', 'name')->disabled(),
+                            ->relationship('theme', 'name')
+                            ->getOptionLabelFromRecordUsing(fn (Theme $record): string => $record->full_name)
+                            ->disabled()
+                            ->columnSpanFull(),
                         TextInput::make('retail_price')->prefix('$')->disabled(),
                         TextInput::make('current_value_new')->label('Current value (new)')->prefix('$')->disabled(),
                         TextInput::make('current_value_used')->label('Current value (used)')->prefix('$')->disabled(),

@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Theme extends Model
 {
@@ -11,32 +14,76 @@ class Theme extends Model
         'parent_id',
     ];
 
-    public function theme()
+    /**
+     * The theme this one sits under, or null when it is top-level. Themes are
+     * only ever two deep.
+     */
+    public function theme(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Theme', 'parent_id');
+        return $this->belongsTo(Theme::class, 'parent_id');
     }
 
-    public function subthemes()
+    public function subthemes(): HasMany
     {
-        return $this->hasMany('App\Models\Theme', 'parent_id');
+        return $this->hasMany(Theme::class, 'parent_id');
     }
 
     /**
-     * Catalog items whose primary theme is this one. Only ever populated for
-     * top-level themes — a set nested under a subtheme records the parent here
-     * and the subtheme in subtheme_id.
+     * Sets filed under this exact theme. A set records its most specific theme,
+     * so a top-level theme holds only those sets Brickset gives no subtheme
+     * for; the rest hang off its subthemes.
      */
-    public function catalogItems()
+    public function catalogItems(): HasMany
     {
-        return $this->hasMany('App\Models\CatalogItem');
+        return $this->hasMany(CatalogItem::class);
     }
 
     /**
-     * Catalog items filed under this theme as their subtheme. The counterpart
-     * to catalogItems(), and the only way to reach a subtheme's sets.
+     * Where this theme sits in the tree, e.g. "Harry Potter › General". Names
+     * like "General" are reused under many parents and mean little alone.
      */
-    public function subthemeCatalogItems()
+    public function getFullNameAttribute(): string
     {
-        return $this->hasMany('App\Models\CatalogItem', 'subtheme_id');
+        return $this->parent_id && $this->theme
+            ? $this->theme->name.' › '.$this->name
+            : $this->name;
+    }
+
+    /**
+     * Sets in this theme plus, for a top-level theme, those in its subthemes.
+     */
+    public function totalCatalogItemsCount(): int
+    {
+        return CatalogItem::whereIn('theme_id', $this->selfAndSubthemeIds())->count();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function selfAndSubthemeIds(): array
+    {
+        return [$this->id, ...$this->subthemes()->pluck('id')->all()];
+    }
+
+    /**
+     * The counts a listing needs, as correlated subqueries rather than a query
+     * per row. total_catalog_items_count spans this theme and its subthemes,
+     * so a top-level theme never reports a misleading zero.
+     */
+    public function scopeWithSetCounts(Builder $query): Builder
+    {
+        return $query
+            ->withCount(['catalogItems', 'subthemes'])
+            ->selectSub(
+                CatalogItem::query()
+                    ->selectRaw('count(*)')
+                    ->where(fn ($sets) => $sets
+                        ->whereColumn('catalog_items.theme_id', 'themes.id')
+                        ->orWhereIn('catalog_items.theme_id', fn ($subthemes) => $subthemes
+                            ->from('themes as subthemes')
+                            ->select('subthemes.id')
+                            ->whereColumn('subthemes.parent_id', 'themes.id'))),
+                'total_catalog_items_count'
+            );
     }
 }

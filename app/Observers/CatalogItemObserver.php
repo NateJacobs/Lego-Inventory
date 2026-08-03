@@ -70,8 +70,7 @@ class CatalogItemObserver
         $catalogItem->minifig_count = empty($set->minifigs) ? 0 : $set->minifigs;
         $catalogItem->retail_price = empty($set->prices['US']['retailPrice']) ? 0 : $set->prices['US']['retailPrice'];
         $catalogItem->year = $set->year;
-        $catalogItem->theme_id = $this->getTheme($set->themeDetails['theme']);
-        $catalogItem->subtheme_id = $this->getSubTheme($set->themeDetails['subtheme'], $catalogItem->theme_id);
+        $catalogItem->theme_id = $this->resolveTheme($set->themeDetails);
         $catalogItem->theme_group = $set->themeDetails['themeGroup'];
         $catalogItem->image_path = $full_image_path;
         $catalogItem->thumbnail_path = $thumbnail_image_path;
@@ -132,31 +131,34 @@ class CatalogItemObserver
         }
     }
 
-    private function getTheme($theme_name)
+    /**
+     * The id of the most specific theme Brickset gives for a set: its subtheme
+     * when there is one, otherwise its top-level theme.
+     *
+     * Brickset reuses subtheme names — "General", "Miscellaneous",
+     * "Promotional" all appear under many themes — so a subtheme is only ever
+     * matched, or created, beneath its own parent.
+     */
+    private function resolveTheme(array $themeDetails): ?int
     {
-        if (empty($theme_name)) {
+        $themeId = $this->findOrCreateTheme($themeDetails['theme'] ?? null, null);
+
+        if ($themeId === null) {
             return null;
         }
 
-        // Match an existing top-level theme by name, or create it.
-        return Theme::firstOrCreate([
-            'name' => $theme_name,
-            'parent_id' => null,
-        ])->id;
+        return $this->findOrCreateTheme($themeDetails['subtheme'] ?? null, $themeId) ?? $themeId;
     }
 
-    private function getSubTheme($subtheme_name, $theme_id)
+    private function findOrCreateTheme(?string $name, ?int $parentId): ?int
     {
-        // 0 signals "no subtheme": a set without a subtheme, or one whose
-        // parent theme could not be resolved.
-        if (empty($subtheme_name) || empty($theme_id)) {
-            return 0;
+        if (empty($name)) {
+            return null;
         }
 
-        // Match an existing subtheme under this theme by name, or create it.
         return Theme::firstOrCreate([
-            'name' => $subtheme_name,
-            'parent_id' => $theme_id,
+            'name' => $name,
+            'parent_id' => $parentId,
         ])->id;
     }
 }

@@ -19,7 +19,6 @@ class CatalogItem extends Model
         'retail_price',
         'year',
         'theme_id',
-        'subtheme_id',
         'theme_group',
         'image_path',
         'thumbnail_path',
@@ -42,14 +41,31 @@ class CatalogItem extends Model
         return $this->hasMany('App\Models\Set');
     }
 
+    /**
+     * The most specific theme Brickset gives for this set — a subtheme when it
+     * has one, otherwise a top-level theme.
+     */
     public function theme()
     {
         return $this->belongsTo('App\Models\Theme', 'theme_id', 'id');
     }
 
-    public function subtheme()
+    /**
+     * The top-level theme, whether the set sits in it directly or under one of
+     * its subthemes. Derived by walking up, so it cannot disagree with theme().
+     */
+    public function getRootThemeAttribute(): ?Theme
     {
-        return $this->belongsTo('App\Models\Theme', 'subtheme_id', 'id');
+        return $this->theme?->parent_id ? $this->theme->theme : $this->theme;
+    }
+
+    /**
+     * The subtheme, when the set is filed under one rather than straight into a
+     * top-level theme.
+     */
+    public function getSubthemeAttribute(): ?Theme
+    {
+        return $this->theme?->parent_id ? $this->theme : null;
     }
 
     public function getTotalRetailPriceAttribute()

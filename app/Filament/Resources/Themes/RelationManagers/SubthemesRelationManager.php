@@ -52,11 +52,9 @@ class SubthemesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
 
-                // Sets filed under this subtheme reference it through
-                // subtheme_id, not theme_id, so count that side.
-                TextColumn::make('subtheme_catalog_items_count')
+                TextColumn::make('catalog_items_count')
                     ->label('Sets')
-                    ->counts('subthemeCatalogItems')
+                    ->counts('catalogItems')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('created_at')

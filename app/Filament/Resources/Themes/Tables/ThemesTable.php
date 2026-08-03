@@ -8,12 +8,14 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ThemesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withSetCounts())
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
@@ -22,24 +24,24 @@ class ThemesTable
                     ->label('Parent theme')
                     ->placeholder('Top-level')
                     ->sortable(),
-                // A top-level theme holds its sets through theme_id and a
-                // subtheme through subtheme_id, so show both rather than one
-                // column that reads zero for every subtheme.
-                TextColumn::make('catalog_items_count')
-                    ->label('Sets')
-                    ->counts('catalogItems')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('subtheme_catalog_items_count')
-                    ->label('Sets as subtheme')
-                    ->counts('subthemeCatalogItems')
-                    ->badge()
-                    ->sortable(),
                 TextColumn::make('subthemes_count')
                     ->label('Subthemes')
-                    ->counts('subthemes')
                     ->badge()
                     ->sortable(),
+
+                // Sets sit on their most specific theme, so a top-level theme's
+                // own count leaves out everything under its subthemes. Lead
+                // with the total and keep the direct figure available.
+                TextColumn::make('total_catalog_items_count')
+                    ->label('Sets')
+                    ->tooltip('Includes sets filed under this theme’s subthemes')
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('catalog_items_count')
+                    ->label('Sets (this theme only)')
+                    ->badge()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

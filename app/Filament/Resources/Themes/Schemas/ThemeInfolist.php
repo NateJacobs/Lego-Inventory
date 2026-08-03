@@ -26,15 +26,17 @@ class ThemeInfolist
                             ->badge()
                             ->state(fn (Theme $record): int => $record->subthemes()->count()),
 
-                        // A top-level theme holds its sets through theme_id; a
-                        // subtheme holds them through subtheme_id. Read whichever
-                        // applies so the count is never a misleading zero.
+                        // Sets sit on their most specific theme, so the total
+                        // has to reach down into the subthemes listed below.
                         TextEntry::make('sets_count')
                             ->label('Sets')
                             ->badge()
-                            ->state(fn (Theme $record): int => $record->parent_id === null
-                                ? $record->catalogItems()->count()
-                                : $record->subthemeCatalogItems()->count()),
+                            ->state(fn (Theme $record): int => $record->totalCatalogItemsCount()),
+                        TextEntry::make('direct_sets_count')
+                            ->label('Filed directly here')
+                            ->badge()
+                            ->state(fn (Theme $record): int => $record->catalogItems()->count())
+                            ->visible(fn (Theme $record): bool => $record->subthemes()->exists()),
                     ]),
             ]);
     }

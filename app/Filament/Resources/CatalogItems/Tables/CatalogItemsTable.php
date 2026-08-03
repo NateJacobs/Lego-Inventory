@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class CatalogItemsTable
@@ -21,6 +22,8 @@ class CatalogItemsTable
     public static function configure(Table $table): Table
     {
         return $table
+            // root_theme walks up from the subtheme, so load both levels once.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('theme.theme'))
             ->columns([
                 ImageColumn::make('thumbnail_path')
                     ->label('')
@@ -33,8 +36,14 @@ class CatalogItemsTable
                     ->limit(40),
                 TextColumn::make('year')
                     ->sortable(),
+                // theme_id points at the subtheme when a set has one, so show
+                // the top-level theme above it for context.
                 TextColumn::make('theme.name')
                     ->label('Theme')
+                    ->description(fn (CatalogItem $record): ?string => $record->subtheme
+                        ? $record->root_theme?->name
+                        : null, position: 'above')
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('piece_count')
                     ->label('Pieces')

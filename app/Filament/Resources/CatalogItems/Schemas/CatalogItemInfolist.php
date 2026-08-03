@@ -41,11 +41,16 @@ class CatalogItemInfolist
                                 TextEntry::make('type')
                                     ->badge()
                                     ->placeholder('—'),
-                                TextEntry::make('theme.name')
+                                // theme_id holds the most specific theme; the
+                                // top level and the subtheme are read back off
+                                // it rather than stored alongside it.
+                                TextEntry::make('root_theme_name')
                                     ->label('Theme')
+                                    ->state(fn (CatalogItem $record): ?string => $record->root_theme?->name)
                                     ->placeholder('Unassigned'),
-                                TextEntry::make('subtheme.name')
+                                TextEntry::make('subtheme_name')
                                     ->label('Subtheme')
+                                    ->state(fn (CatalogItem $record): ?string => $record->subtheme?->name)
                                     ->placeholder('None'),
                             ]),
                     ]),
