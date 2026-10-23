@@ -44,14 +44,10 @@ class SetsTable
                     ->sortable(),
                 TextColumn::make('savings')
                     ->label('Savings')
-                    ->state(function (Set $record): ?string {
-                        $retail = $record->catalogItem?->retail_price;
-                        if (! $retail || $record->purchase_price === null) {
-                            return null;
-                        }
-
-                        return round((($retail - $record->purchase_price) / $retail) * 100, 1).'%';
-                    }),
+                    ->state(fn (Set $record): ?string => $record->savings_percent === null
+                        ? null
+                        : $record->savings_percent.'%')
+                    ->placeholder('—'),
                 TextColumn::make('storageLocation.name')
                     ->label('Storage')
                     ->sortable()
