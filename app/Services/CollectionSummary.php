@@ -18,6 +18,15 @@ class CollectionSummary
     public const CACHE_KEY = 'collection-summary';
 
     /**
+     * Pieces come from CollectionValuation rather than being counted here, so
+     * the landing page and the monthly snapshots cannot disagree about how big
+     * the collection is.
+     */
+    public function __construct(protected CollectionValuation $valuation)
+    {
+    }
+
+    /**
      * @return array<string, int|null>
      */
     public function figures(): array
@@ -25,8 +34,13 @@ class CollectionSummary
         return Cache::remember(self::CACHE_KEY, now()->addHour(), fn (): array => [
             'copies' => $this->copies(),
             'sets' => $this->distinctSets(),
-            'pieces' => $this->sum('piece_count'),
-            'minifigures' => $this->sum('minifig_count'),
+            // Every piece owned: the catalogued sets, the bulk lots and the
+            // BrickLink orders. Counting only the sets left a third of them
+            // out.
+            'pieces' => $this->valuation->pieceCount(),
+            // Sets are the only thing here that records minifigures; a bulk
+            // lot and an order are both just a number of pieces.
+            'minifigures' => $this->setsSum('minifig_count'),
             'themes' => $this->topLevelThemes(),
             'earliest_set' => $this->setYear('min'),
             'latest_set' => $this->setYear('max'),
@@ -55,7 +69,10 @@ class CollectionSummary
         return Set::query()->distinct()->count('catalog_item_id');
     }
 
-    protected function sum(string $column): int
+    /**
+     * Sum a catalog_items column across every owned copy.
+     */
+    protected function setsSum(string $column): int
     {
         return (int) Set::query()
             ->join('catalog_items', 'sets.catalog_item_id', '=', 'catalog_items.id')
