@@ -33,5 +33,15 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(30),
             Limit::perDay(2000),
         ]);
+
+        // Throttle Brickset lookups. Each DownloadCatalogItemImages job makes
+        // one API call plus two plain image downloads from images.brickset.com,
+        // which are not API requests. Brickset does not publish a figure the
+        // way BrickLink does, so this is deliberately gentle rather than tuned:
+        // 60/minute clears a 2,000 set catalogue in about half an hour.
+        RateLimiter::for('brickset', fn () => [
+            Limit::perMinute(60),
+            Limit::perDay(5000),
+        ]);
     }
 }

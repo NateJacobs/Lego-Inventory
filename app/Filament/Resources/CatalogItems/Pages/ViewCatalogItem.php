@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\CatalogItems\Pages;
 
 use App\Exceptions\BricklinkPriceException;
+use App\Exceptions\BricksetImageException;
+use App\Exceptions\BricksetLookupException;
 use App\Filament\Resources\CatalogItems\CatalogItemResource;
 use App\Models\CatalogItem;
 use App\UpdateCatalogItem;
@@ -45,10 +47,46 @@ class ViewCatalogItem extends ViewRecord
                         ->success()
                         ->send();
                 }),
+            $this->downloadImagesAction(),
             $this->overrideBricklinkIdAction(),
             EditAction::make(),
             DeleteAction::make(),
         ];
+    }
+
+    /**
+     * The pictures live on the public disk rather than in the database, so a
+     * rebuilt or migrated server has every path recorded and no files to serve.
+     * This fetches them again from Brickset, one set at a time; use
+     * collection:download-images for the whole catalogue.
+     */
+    protected function downloadImagesAction(): Action
+    {
+        return Action::make('downloadImages')
+            ->label('Download images')
+            ->icon('heroicon-o-photo')
+            ->action(function (CatalogItem $record): void {
+                try {
+                    // Forced: asking for it by hand means fetch it, even if
+                    // there is a file there already.
+                    (new UpdateCatalogItem($record))->updateImages(force: true);
+                } catch (BricksetImageException|BricksetLookupException $e) {
+                    Notification::make()
+                        ->title('Could not download the images')
+                        ->body($e->getMessage())
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $this->refreshFormData(['image_path', 'thumbnail_path']);
+
+                Notification::make()
+                    ->title('Images downloaded from Brickset')
+                    ->success()
+                    ->send();
+            });
     }
 
     /**

@@ -2,13 +2,13 @@
 
 namespace App\Observers;
 
-use App\Exceptions\BricksetLookupException;
+use App\Exceptions\BricksetImageException;
 use App\Models\CatalogItem;
 use App\Models\Theme;
 use App\Services\BricklinkClient;
 use App\Services\BricksetClient;
+use App\UpdateCatalogItem;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
 
 class CatalogItemObserver
@@ -21,46 +21,7 @@ class CatalogItemObserver
      */
     public function creating(CatalogItem $catalogItem)
     {
-        // query Brickset for the set
-        $brickset = BricksetClient::make();
-
-        $set_response = $brickset->getSets(
-            [
-                'setNumber' => $catalogItem->item_number
-            ]
-        );
-
-        // getSets returns a valid array only when a set is found; on failure it
-        // returns a ResponseException, an ErrorException, or null. Fail with a
-        // clear message rather than treating that result as an array (and rather
-        // than later hitting a NOT NULL error because no fields got populated).
-        if (! is_array($set_response) || ! isset($set_response[0])) {
-            $reason = $set_response instanceof \Throwable
-                ? $set_response->getMessage()
-                : 'no matching set was found';
-
-            throw new BricksetLookupException(
-                "Could not load set {$catalogItem->item_number} from Brickset: {$reason}"
-            );
-        }
-
-        $set = $set_response[0];
-
-        // save images
-        if (isset($set->images['imageURL']) && ! empty($set->images['imageURL'])) {
-            $name = $set->itemNumbers['number'].'-'.(int) $set->itemNumbers['numberVariant'];
-
-            $full_image = file_get_contents($set->images['imageURL']);
-            $full_image_path = 'set-images/full-'.$name.'.jpg';
-            Storage::disk('public')->put($full_image_path, $full_image);
-
-            $thumbnail_image = file_get_contents($set->images['thumbnailURL']);
-            $thumbnail_image_path = 'set-images/thumb-'.$name.'.jpg';
-            Storage::disk('public')->put($thumbnail_image_path, $thumbnail_image);
-        } else {
-            $full_image_path = '';
-            $thumbnail_image_path = '';
-        }
+        $set = BricksetClient::findSet($catalogItem->item_number);
 
         $catalogItem->brickset_id = (int) $set->itemNumbers['setID'];
         $catalogItem->set_number = $set->itemNumbers['number'];
@@ -72,9 +33,22 @@ class CatalogItemObserver
         $catalogItem->year = $set->year;
         $catalogItem->theme_id = $this->resolveTheme($set->themeDetails);
         $catalogItem->theme_group = $set->themeDetails['themeGroup'];
-        $catalogItem->image_path = $full_image_path;
-        $catalogItem->thumbnail_path = $thumbnail_image_path;
         $catalogItem->brickset_url = $set->bricksetURL;
+
+        // Pass the response we already hold rather than updateImages(), which
+        // would ask Brickset for this same set a second time. Set after the
+        // numbers above, since the filenames are built from them.
+        try {
+            (new UpdateCatalogItem($catalogItem))->storeImages($set->images);
+        } catch (BricksetImageException $e) {
+            // Best effort, as with the prices below: a set is still worth
+            // cataloguing without a picture, and collection:download-images
+            // can fetch it later.
+            Log::warning('Brickset image download failed for '.$catalogItem->item_number.': '.$e->getMessage());
+
+            $catalogItem->image_path = '';
+            $catalogItem->thumbnail_path = '';
+        }
 
         $catalogItem = $this->getBricklinkPrices($catalogItem);
     }

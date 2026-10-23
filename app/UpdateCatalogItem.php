@@ -3,8 +3,12 @@
 namespace App;
 
 use App\Exceptions\BricklinkPriceException;
+use App\Exceptions\BricksetImageException;
 use App\Models\CatalogItem;
 use App\Services\BricklinkClient;
+use App\Services\BricksetClient;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
 
 class UpdateCatalogItem
@@ -57,6 +61,111 @@ class UpdateCatalogItem
         // Both lookups came back, so the pair of values above is as of now.
         $catalogItem->prices_updated_at = now();
         $catalogItem->save();
+    }
+
+    /**
+     * Put this item's pictures on the public disk, fetching the set from
+     * Brickset to find out where they live.
+     *
+     * Returns false when the files are already there, so a backfill across the
+     * whole catalogue can be re-run without paying for what it already has.
+     *
+     * @throws \App\Exceptions\BricksetLookupException|BricksetImageException
+     */
+    public function updateImages(bool $force = false): bool
+    {
+        $catalogItem = $this->model;
+
+        if (! $force && $catalogItem->hasStoredImages()) {
+            return false;
+        }
+
+        $this->storeImages(BricksetClient::findSet($catalogItem->item_number)->images);
+
+        $catalogItem->save();
+
+        return true;
+    }
+
+    /**
+     * Download the pictures a Brickset response points at and point the item's
+     * columns at the stored copies.
+     *
+     * Takes the images array rather than looking the set up, so the observer
+     * can pass the response it already holds instead of asking Brickset twice
+     * for the same set.
+     *
+     * @param  array<string, string>  $images  As built by MurstenTrack's Set response.
+     *
+     * @throws BricksetImageException
+     */
+    public function storeImages(array $images): void
+    {
+        $catalogItem = $this->model;
+        $url = $images['imageURL'] ?? '';
+
+        if (blank($url)) {
+            throw new BricksetImageException(
+                "Brickset has no picture for set {$catalogItem->item_number}."
+            );
+        }
+
+        $disk = Storage::disk('public');
+
+        $imagePath = $this->pathFor('full', $url);
+        $disk->put($imagePath, $this->fetchImage($url));
+
+        // Most sets have a separate thumbnail; where one is missing, both
+        // columns point at the full picture so the tables still show something.
+        $thumbnailUrl = $images['thumbnailURL'] ?? '';
+        $thumbnailPath = $imagePath;
+
+        if (filled($thumbnailUrl)) {
+            $thumbnailPath = $this->pathFor('thumb', $thumbnailUrl);
+            $disk->put($thumbnailPath, $this->fetchImage($thumbnailUrl));
+        }
+
+        $catalogItem->image_path = $imagePath;
+        $catalogItem->thumbnail_path = $thumbnailPath;
+    }
+
+    protected function pathFor(string $prefix, string $url): string
+    {
+        return 'set-images/'.$prefix.'-'.$this->model->item_number.'.'.$this->extensionOf($url);
+    }
+
+    /**
+     * Brickset serves mostly .jpg but not only — two rows here were imported as
+     * .jpeg — so take the extension from the URL rather than assuming one.
+     */
+    protected function extensionOf(string $url): string
+    {
+        $extension = strtolower(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+
+        return in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)
+            ? $extension
+            : 'jpg';
+    }
+
+    /**
+     * The old code used file_get_contents(), which returns false on an HTTP
+     * error and so stored an empty file without anyone noticing.
+     *
+     * @throws BricksetImageException
+     */
+    protected function fetchImage(string $url): string
+    {
+        $response = Http::timeout(20)->retry(2, 500, throw: false)->get($url);
+
+        if ($response->failed() || $response->body() === '') {
+            throw new BricksetImageException(
+                "Could not download {$url}: ".($response->failed()
+                    ? 'HTTP '.$response->status().'.'
+                    : 'the response was empty.')
+            );
+        }
+
+        return $response->body();
     }
 
     /**

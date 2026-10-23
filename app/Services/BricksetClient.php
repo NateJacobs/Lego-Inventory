@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\BricksetLookupException;
 use NateJacobs\MurstenTrack\Resources\Set as BrickSetSearch;
+use NateJacobs\MurstenTrack\Responses\Set as BrickSetResponse;
 
 /**
  * Builds a Brickset client with its API key where the package can find it.
@@ -47,5 +48,32 @@ class BricksetClient
         }
 
         return new BrickSetSearch;
+    }
+
+    /**
+     * The one set Brickset holds under this number, e.g. "71053-9".
+     *
+     * getSets only returns an array when it finds something; on failure it
+     * hands back a ResponseException, an ErrorException, or null. Turning all
+     * of that into one exception here keeps every caller from having to tell
+     * those four shapes apart.
+     *
+     * @throws BricksetLookupException
+     */
+    public static function findSet(string $itemNumber): BrickSetResponse
+    {
+        $response = self::make()->getSets(['setNumber' => $itemNumber]);
+
+        if (! is_array($response) || ! isset($response[0])) {
+            $reason = $response instanceof \Throwable
+                ? $response->getMessage()
+                : 'no matching set was found';
+
+            throw new BricksetLookupException(
+                "Could not load set {$itemNumber} from Brickset: {$reason}"
+            );
+        }
+
+        return $response[0];
     }
 }

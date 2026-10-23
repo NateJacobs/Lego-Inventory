@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Observers\CatalogItemObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy(CatalogItemObserver::class)]
 class CatalogItem extends Model
@@ -64,6 +65,26 @@ class CatalogItem extends Model
     public function getBricklinkLookupNumberAttribute(): string
     {
         return filled($this->bricklink_id) ? $this->bricklink_id : $this->item_number;
+    }
+
+    /**
+     * Whether both pictures are actually on the public disk.
+     *
+     * The columns holding a path is not enough: the files live outside the
+     * repository and the database, so a rebuilt or migrated server can have
+     * every path recorded and not one picture to show.
+     */
+    public function hasStoredImages(): bool
+    {
+        $disk = Storage::disk('public');
+
+        foreach ([$this->image_path, $this->thumbnail_path] as $path) {
+            if (blank($path) || ! $disk->exists($path)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function sets()

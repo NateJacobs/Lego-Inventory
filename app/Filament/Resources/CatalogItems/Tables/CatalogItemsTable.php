@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\CatalogItems\Tables;
 
 use App\Exceptions\BricklinkPriceException;
+use App\Exceptions\BricksetImageException;
+use App\Exceptions\BricksetLookupException;
 use App\Models\CatalogItem;
 use App\UpdateCatalogItem;
 use Filament\Actions\BulkAction;
@@ -104,6 +106,44 @@ class CatalogItemsTable
                                 : $notification->body('Failed: '.implode(', ', $failed))->warning();
 
                             $notification->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('downloadImages')
+                        ->label('Download images')
+                        ->icon('heroicon-o-photo')
+                        ->action(function (Collection $records) {
+                            $downloaded = 0;
+                            $alreadyThere = 0;
+                            $failed = [];
+
+                            foreach ($records as $record) {
+                                try {
+                                    (new UpdateCatalogItem($record))->updateImages()
+                                        ? $downloaded++
+                                        : $alreadyThere++;
+                                } catch (BricksetImageException|BricksetLookupException $e) {
+                                    $failed[] = $record->item_number;
+                                }
+                            }
+
+                            $notification = Notification::make()
+                                ->title("Downloaded images for {$downloaded} set(s).");
+
+                            $body = [];
+
+                            if ($alreadyThere > 0) {
+                                $body[] = "{$alreadyThere} already had both files.";
+                            }
+
+                            if (! empty($failed)) {
+                                $body[] = 'Failed: '.implode(', ', $failed);
+                            }
+
+                            empty($failed)
+                                ? $notification->success()
+                                : $notification->warning();
+
+                            $notification->body(implode(' ', $body))->send();
                         })
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
