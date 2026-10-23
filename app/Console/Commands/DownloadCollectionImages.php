@@ -69,7 +69,7 @@ class DownloadCollectionImages extends Command
             return self::SUCCESS;
         }
 
-        if ($this->hasNoQueueWorker()) {
+        if ($this->queueRunsInline()) {
             return $this->workThroughHere(
                 items: $items,
                 pauseSeconds: self::PAUSE_SECONDS,

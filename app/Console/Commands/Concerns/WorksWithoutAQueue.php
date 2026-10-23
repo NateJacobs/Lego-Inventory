@@ -8,17 +8,22 @@ use Throwable;
 
 /**
  * Lets a command that would hand its work to the queue do that work itself
- * when there is no worker to hand it to.
+ * when the queue connection is sync.
  *
- * This is not a convenience. A sync job the RateLimited middleware holds back
- * is released, and nothing ever picks a released sync job up again: it is
- * dropped with no error, no log line and no retry. So on a sync connection a
- * batch of rate-limited jobs quietly loses almost all of itself, which is far
- * worse than taking longer.
+ * This is not a convenience, and it is not about whether a worker exists: on
+ * the sync connection a dispatched job runs inline in the dispatching process
+ * and a worker never sees it, however many are running. A sync job the
+ * RateLimited middleware holds back is released, and nothing ever picks a
+ * released sync job up again, so it goes with no error, no log line and no
+ * retry — a batch of rate-limited jobs quietly loses almost all of itself,
+ * which is far worse than taking longer.
  */
 trait WorksWithoutAQueue
 {
-    protected function hasNoQueueWorker(): bool
+    /**
+     * Whether a dispatched job would run inline rather than reach a worker.
+     */
+    protected function queueRunsInline(): bool
     {
         return config('queue.default') === 'sync';
     }
@@ -45,7 +50,8 @@ trait WorksWithoutAQueue
     ): int {
         $minutes = (int) ceil($items->count() * $pauseSeconds / 60);
 
-        $this->warn('QUEUE_CONNECTION is sync, so there is no worker to hand these to.');
+        $this->warn('QUEUE_CONNECTION is sync, so a dispatched job would run inline here anyway '
+            .'and never reach a worker.');
         $this->line("Working through them here instead, about {$minutes} minute(s). "
             .'Stopping and re-running picks up where it left off.');
         $this->newLine();
