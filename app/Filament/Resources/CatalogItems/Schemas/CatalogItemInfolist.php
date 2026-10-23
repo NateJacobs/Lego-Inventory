@@ -102,6 +102,19 @@ class CatalogItemInfolist
                             ->label('Owned value (used)')
                             ->money('usd')
                             ->state(fn (CatalogItem $record): float => $record->sets()->count() * (float) $record->current_value_used),
+
+                        // How old the two BrickLink figures are. Null means
+                        // either that the set has never priced or that it was
+                        // priced before the column existed, which the values
+                        // themselves tell apart.
+                        TextEntry::make('prices_updated_at')
+                            ->label('Prices updated')
+                            ->since()
+                            ->dateTimeTooltip()
+                            ->placeholder(fn (CatalogItem $record): string => (float) $record->current_value_new > 0
+                                ? 'Unknown'
+                                : 'Never priced')
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('References')

@@ -38,7 +38,7 @@ class ViewCatalogItem extends ViewRecord
                         return;
                     }
 
-                    $this->refreshFormData(['current_value_new', 'current_value_used']);
+                    $this->refreshFormData(['current_value_new', 'current_value_used', 'prices_updated_at']);
 
                     Notification::make()
                         ->title('BrickLink prices updated')
@@ -98,7 +98,7 @@ class ViewCatalogItem extends ViewRecord
                     return;
                 }
 
-                $this->refreshFormData(['bricklink_id', 'current_value_new', 'current_value_used']);
+                $this->refreshFormData(['bricklink_id', 'current_value_new', 'current_value_used', 'prices_updated_at']);
 
                 Notification::make()
                     ->title('Priced as '.$record->fresh()->bricklink_lookup_number)

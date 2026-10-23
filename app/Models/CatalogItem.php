@@ -26,6 +26,10 @@ class CatalogItem extends Model
         'brickset_url',
     ];
 
+    protected $casts = [
+        'prices_updated_at' => 'datetime',
+    ];
+
     protected $appends = [
         'total_retail_price',
         'total_set_pieces',

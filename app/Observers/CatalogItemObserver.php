@@ -130,6 +130,7 @@ class CatalogItemObserver
             $catalogItem->bricklink_id = $catalogItem->item_number;
             $catalogItem->current_value_new = $new;
             $catalogItem->current_value_used = $used;
+            $catalogItem->prices_updated_at = now();
 
             return $catalogItem;
         }

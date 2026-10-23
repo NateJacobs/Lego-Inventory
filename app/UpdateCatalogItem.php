@@ -54,6 +54,8 @@ class UpdateCatalogItem
 
         $catalogItem->current_value_new = $new;
         $catalogItem->current_value_used = $used;
+        // Both lookups came back, so the pair of values above is as of now.
+        $catalogItem->prices_updated_at = now();
         $catalogItem->save();
     }
 
