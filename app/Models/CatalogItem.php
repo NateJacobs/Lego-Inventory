@@ -13,6 +13,7 @@ class CatalogItem extends Model
         'brickset_id',
         'set_number',
         'set_number_variant',
+        'type',
         'name',
         'piece_count',
         'minifig_count',
@@ -34,7 +35,20 @@ class CatalogItem extends Model
         'current_value_new' => 0,
         'current_value_used' => 0,
         'retail_price' => 0,
+        // BrickLink builds its URL from the item type, so an absent one asks
+        // for /items///price and comes back as a malformed URI.
+        'type' => 'set',
     ];
+
+    /**
+     * How BrickLink and Brickset both identify this item, e.g. "71053-1".
+     * bricklink_id stores the same thing, but only once a price lookup has
+     * succeeded, so it is empty on anything never priced.
+     */
+    public function getItemNumberAttribute(): string
+    {
+        return $this->set_number.'-'.(int) $this->set_number_variant;
+    }
 
     public function sets()
     {

@@ -87,7 +87,10 @@ class CatalogItemsTable
                                     (new UpdateCatalogItem($record))->updateBricklink();
                                     $updated++;
                                 } catch (BricklinkPriceException $e) {
-                                    $failed[] = $record->bricklink_id ?? $record->set_number;
+                                    // Not bricklink_id: it is an empty string
+                                    // until a lookup succeeds, which listed
+                                    // failures as blanks.
+                                    $failed[] = $record->item_number;
                                 }
                             }
 

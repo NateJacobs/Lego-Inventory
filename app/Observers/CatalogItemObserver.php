@@ -26,7 +26,7 @@ class CatalogItemObserver
 
         $set_response = $brickset->getSets(
             [
-                'setNumber' => $catalogItem->set_number.'-'.$catalogItem->set_number_variant
+                'setNumber' => $catalogItem->item_number
             ]
         );
 
@@ -39,9 +39,9 @@ class CatalogItemObserver
                 ? $set_response->getMessage()
                 : 'no matching set was found';
 
-            $setNumber = $catalogItem->set_number.'-'.$catalogItem->set_number_variant;
-
-            throw new BricksetLookupException("Could not load set {$setNumber} from Brickset: {$reason}");
+            throw new BricksetLookupException(
+                "Could not load set {$catalogItem->item_number} from Brickset: {$reason}"
+            );
         }
 
         $set = $set_response[0];
@@ -84,7 +84,7 @@ class CatalogItemObserver
         $items = new BLPrice(BricklinkClient::make());
 
         $price_response_new = $items->getPrice(
-            $catalogItem->set_number.'-'.$catalogItem->set_number_variant,
+            $catalogItem->item_number,
             $catalogItem->type,
             [
                 'guide_type' => 'stock',
@@ -94,10 +94,14 @@ class CatalogItemObserver
         );
 
         if ( $price_response_new instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
-            Log::warning('BrickLink price lookup failed for '.$catalogItem->set_number.'-'.$catalogItem->set_number_variant.': '.$price_response_new->getMessage());
+            // Best effort: the set is still worth cataloguing unpriced, and the
+            // panel's Update BrickLink prices action can fill it in later.
+            Log::warning('BrickLink price lookup failed for '.$catalogItem->item_number.': '.$price_response_new->getMessage());
+
+            return $catalogItem;
         } else {
             $price_response_used = $items->getPrice(
-                $catalogItem->set_number.'-'.$catalogItem->set_number_variant,
+                $catalogItem->item_number,
                 $catalogItem->type,
                 [
                     'guide_type' => 'stock',
@@ -123,7 +127,7 @@ class CatalogItemObserver
                 $used = $new;
             }
 
-            $catalogItem->bricklink_id = $catalogItem->set_number.'-'.$catalogItem->set_number_variant;
+            $catalogItem->bricklink_id = $catalogItem->item_number;
             $catalogItem->current_value_new = $new;
             $catalogItem->current_value_used = $used;
 

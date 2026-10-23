@@ -17,8 +17,16 @@ class UpdateCatalogItem
     {
         $catalogItem = $this->model;
 
-        if (is_null($catalogItem->bricklink_id)) {
-            return;
+        // Ask by set number rather than bricklink_id: that column is only
+        // written once a lookup has succeeded, so it is empty on anything never
+        // priced — and an empty one asked BrickLink for /items///price, which
+        // it rejects as a malformed URI. is_null() missed it because the column
+        // defaults to an empty string rather than null.
+        if (blank($catalogItem->set_number) || blank($catalogItem->type)) {
+            throw new BricklinkPriceException(
+                'Cannot price catalog item '.$catalogItem->id.': it has no '
+                .(blank($catalogItem->set_number) ? 'set number' : 'item type').'.'
+            );
         }
 
         $items = new BLPrice(BricklinkClient::make());
@@ -40,7 +48,7 @@ class UpdateCatalogItem
             $used = $new;
         }
 
-        $catalogItem->bricklink_id = $catalogItem->set_number.'-'.$catalogItem->set_number_variant;
+        $catalogItem->bricklink_id = $catalogItem->item_number;
         $catalogItem->current_value_new = $new;
         $catalogItem->current_value_used = $used;
         $catalogItem->save();
@@ -55,7 +63,7 @@ class UpdateCatalogItem
     protected function fetchPrice(BLPrice $items, $catalogItem, string $condition)
     {
         $response = $items->getPrice(
-            $catalogItem->bricklink_id,
+            $catalogItem->item_number,
             $catalogItem->type,
             [
                 'guide_type' => 'stock',
@@ -66,7 +74,7 @@ class UpdateCatalogItem
 
         if ( $response instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
             throw new BricklinkPriceException(
-                "BrickLink price lookup failed for {$catalogItem->bricklink_id}: ".$response->getMessage()
+                "BrickLink price lookup failed for {$catalogItem->item_number}: ".$response->getMessage()
             );
         }
 
