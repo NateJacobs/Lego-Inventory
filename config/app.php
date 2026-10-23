@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'LEGO Inventory'),
+    'name' => env('APP_NAME', 'Mursten'),
 
     /*
     |--------------------------------------------------------------------------
