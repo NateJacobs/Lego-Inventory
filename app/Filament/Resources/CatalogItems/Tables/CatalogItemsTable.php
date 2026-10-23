@@ -6,6 +6,7 @@ use App\Exceptions\BricklinkPriceException;
 use App\Exceptions\BricksetImageException;
 use App\Exceptions\BricksetLookupException;
 use App\Models\CatalogItem;
+use App\Models\Theme;
 use App\UpdateCatalogItem;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -15,6 +16,7 @@ use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -72,6 +74,15 @@ class CatalogItemsTable
                     ->money('usd')
                     ->sortable()
                     ->toggleable(),
+            ])
+            ->filters([
+                SelectFilter::make('theme')
+                    ->label('Theme')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->options(fn (): array => self::themeOptions())
+                    ->query(fn (Builder $query, array $data): Builder => self::filterByTheme($query, $data)),
             ])
             ->defaultSort('set_number')
             ->recordActions([
@@ -149,5 +160,61 @@ class CatalogItemsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Themes to offer, labelled by where they sit: "Harry Potter" for the
+     * top-level theme, "Harry Potter › General" for a subtheme.
+     *
+     * Only themes that would actually match something. Brickset's tree holds
+     * 1,116 themes and barely a third of them appear in this collection, so
+     * listing all of them would be mostly dead ends. A top-level theme counts
+     * as used when one of its subthemes is.
+     *
+     * @return array<int, string>
+     */
+    protected static function themeOptions(): array
+    {
+        $used = CatalogItem::query()->distinct()->whereNotNull('theme_id')->pluck('theme_id');
+
+        return Theme::query()
+            ->with('theme')
+            ->where(fn (Builder $themes): Builder => $themes
+                ->whereIn('id', $used)
+                ->orWhereIn('id', Theme::query()
+                    ->select('parent_id')
+                    ->whereIn('id', $used)
+                    ->whereNotNull('parent_id')))
+            ->get()
+            // Each top-level theme, then its own subthemes beneath it.
+            ->sortBy(fn (Theme $theme): array => [
+                $theme->parent_id ? (string) $theme->theme?->name : $theme->name,
+                $theme->parent_id ? 1 : 0,
+                $theme->name,
+            ])
+            ->mapWithKeys(fn (Theme $theme): array => [$theme->id => $theme->full_name])
+            ->all();
+    }
+
+    /**
+     * A set records its most specific theme, so picking a top-level theme has
+     * to reach the subthemes under it as well — otherwise choosing "Harry
+     * Potter" would show only the handful of sets Brickset files directly in
+     * it. Picking a subtheme matches that subtheme alone.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected static function filterByTheme(Builder $query, array $data): Builder
+    {
+        $ids = array_filter((array) ($data['values'] ?? []));
+
+        if (empty($ids)) {
+            return $query;
+        }
+
+        // One subquery for the children rather than a lookup per selection.
+        return $query->where(fn (Builder $items): Builder => $items
+            ->whereIn('theme_id', $ids)
+            ->orWhereIn('theme_id', Theme::query()->select('id')->whereIn('parent_id', $ids)));
     }
 }
