@@ -41,13 +41,25 @@ class CatalogItem extends Model
     ];
 
     /**
-     * How BrickLink and Brickset both identify this item, e.g. "71053-1".
-     * bricklink_id stores the same thing, but only once a price lookup has
-     * succeeded, so it is empty on anything never priced.
+     * How Brickset identifies this item, e.g. "71053-9".
      */
     public function getItemNumberAttribute(): string
     {
         return $this->set_number.'-'.(int) $this->set_number_variant;
+    }
+
+    /**
+     * What to ask BrickLink for.
+     *
+     * Usually the Brickset number, which BrickLink shares. Collectable
+     * minifigures are the exception: Brickset files Big Bad Wolf as 71053-9
+     * while BrickLink calls the same polybag colshr-9, encoding the series in
+     * a way nothing in the Brickset response gives us. So bricklink_id doubles
+     * as an override — set it by hand and lookups follow it.
+     */
+    public function getBricklinkLookupNumberAttribute(): string
+    {
+        return filled($this->bricklink_id) ? $this->bricklink_id : $this->item_number;
     }
 
     public function sets()

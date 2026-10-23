@@ -17,15 +17,15 @@ class UpdateCatalogItem
     {
         $catalogItem = $this->model;
 
-        // Ask by set number rather than bricklink_id: that column is only
-        // written once a lookup has succeeded, so it is empty on anything never
-        // priced — and an empty one asked BrickLink for /items///price, which
-        // it rejects as a malformed URI. is_null() missed it because the column
-        // defaults to an empty string rather than null.
-        if (blank($catalogItem->set_number) || blank($catalogItem->type)) {
+        // bricklink_id is an override where BrickLink numbers an item
+        // differently, and empty on anything never priced — so fall back to the
+        // Brickset number rather than asking for /items///price, which
+        // BrickLink rejects as a malformed URI. The old guard used is_null(),
+        // which an empty string is not.
+        if (blank($catalogItem->bricklink_lookup_number) || blank($catalogItem->type)) {
             throw new BricklinkPriceException(
                 'Cannot price catalog item '.$catalogItem->id.': it has no '
-                .(blank($catalogItem->set_number) ? 'set number' : 'item type').'.'
+                .(blank($catalogItem->bricklink_lookup_number) ? 'set number' : 'item type').'.'
             );
         }
 
@@ -48,7 +48,10 @@ class UpdateCatalogItem
             $used = $new;
         }
 
-        $catalogItem->bricklink_id = $catalogItem->item_number;
+        if (blank($catalogItem->bricklink_id)) {
+            $catalogItem->bricklink_id = $catalogItem->item_number;
+        }
+
         $catalogItem->current_value_new = $new;
         $catalogItem->current_value_used = $used;
         $catalogItem->save();
@@ -63,7 +66,7 @@ class UpdateCatalogItem
     protected function fetchPrice(BLPrice $items, $catalogItem, string $condition)
     {
         $response = $items->getPrice(
-            $catalogItem->item_number,
+            $catalogItem->bricklink_lookup_number,
             $catalogItem->type,
             [
                 'guide_type' => 'stock',
@@ -74,7 +77,7 @@ class UpdateCatalogItem
 
         if ( $response instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
             throw new BricklinkPriceException(
-                "BrickLink price lookup failed for {$catalogItem->item_number}: ".$response->getMessage()
+                "BrickLink price lookup failed for {$catalogItem->bricklink_lookup_number}: ".$response->getMessage()
             );
         }
 

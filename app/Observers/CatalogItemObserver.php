@@ -84,7 +84,7 @@ class CatalogItemObserver
         $items = new BLPrice(BricklinkClient::make());
 
         $price_response_new = $items->getPrice(
-            $catalogItem->item_number,
+            $catalogItem->bricklink_lookup_number,
             $catalogItem->type,
             [
                 'guide_type' => 'stock',
@@ -96,12 +96,12 @@ class CatalogItemObserver
         if ( $price_response_new instanceof \NateJacobs\MurstenStock\Exceptions\ResponseException) {
             // Best effort: the set is still worth cataloguing unpriced, and the
             // panel's Update BrickLink prices action can fill it in later.
-            Log::warning('BrickLink price lookup failed for '.$catalogItem->item_number.': '.$price_response_new->getMessage());
+            Log::warning('BrickLink price lookup failed for '.$catalogItem->bricklink_lookup_number.': '.$price_response_new->getMessage());
 
             return $catalogItem;
         } else {
             $price_response_used = $items->getPrice(
-                $catalogItem->item_number,
+                $catalogItem->bricklink_lookup_number,
                 $catalogItem->type,
                 [
                     'guide_type' => 'stock',
