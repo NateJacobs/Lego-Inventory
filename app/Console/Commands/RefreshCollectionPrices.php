@@ -89,7 +89,8 @@ class RefreshCollectionPrices extends Command
         // entry per month, written by the scheduled collection:snapshot on the
         // last day. A batch-completion snapshot would add a second, extra entry
         // dated whenever the batch happened to finish.
-        $this->info("Queued a BrickLink price refresh for {$items->count()} sets (batch {$batch->id}).");
+        $this->info("Queued a BrickLink price refresh for {$items->count()} set(s) on the "
+            ."\"{$this->queueConnection()}\" connection (batch {$batch->id}).");
 
         return self::SUCCESS;
     }

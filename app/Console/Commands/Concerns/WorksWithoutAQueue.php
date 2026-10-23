@@ -22,10 +22,18 @@ trait WorksWithoutAQueue
 {
     /**
      * Whether a dispatched job would run inline rather than reach a worker.
+     *
+     * Reads the same value the dispatcher does: a batch with no connection of
+     * its own goes to queue.default, whatever a worker was started against.
      */
     protected function queueRunsInline(): bool
     {
-        return config('queue.default') === 'sync';
+        return $this->queueConnection() === 'sync';
+    }
+
+    protected function queueConnection(): string
+    {
+        return (string) config('queue.default');
     }
 
     /**

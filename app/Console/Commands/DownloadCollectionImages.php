@@ -89,7 +89,11 @@ class DownloadCollectionImages extends Command
             ->allowFailures()
             ->dispatch();
 
-        $this->info("Queued an image download for {$items->count()} set(s) (batch {$batch->id}).");
+        // Naming the connection makes a misconfigured queue visible here
+        // rather than in a stack trace: a worker started against one
+        // connection does not see jobs dispatched to another.
+        $this->info("Queued an image download for {$items->count()} set(s) on the "
+            ."\"{$this->queueConnection()}\" connection (batch {$batch->id}).");
         $this->line('A set Brickset has no picture for will fail; those are logged, not retried forever.');
 
         return self::SUCCESS;
