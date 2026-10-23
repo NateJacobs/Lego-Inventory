@@ -24,6 +24,7 @@ class SetsTable
             ->columns([
                 ImageColumn::make('catalogItem.thumbnail_path')
                     ->label('')
+                    ->disk('public')
                     ->square(),
                 TextColumn::make('catalogItem.set_number')
                     ->label('Set')

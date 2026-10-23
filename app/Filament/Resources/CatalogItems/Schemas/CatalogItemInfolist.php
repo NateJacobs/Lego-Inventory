@@ -19,6 +19,7 @@ class CatalogItemInfolist
                     ->schema([
                         ImageEntry::make('image_path')
                             ->label('')
+                            ->disk('public')
                             ->height(180)
                             ->extraImgAttributes(['class' => 'object-contain'])
                             ->columnSpan(1),

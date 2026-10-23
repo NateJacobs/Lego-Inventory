@@ -25,8 +25,11 @@ class CatalogItemsTable
             // root_theme walks up from the subtheme, so load both levels once.
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('theme.theme'))
             ->columns([
+                // The observer writes set images to the public disk, which
+                // is not the disk Filament reaches for by default.
                 ImageColumn::make('thumbnail_path')
                     ->label('')
+                    ->disk('public')
                     ->square(),
                 TextColumn::make('set_number')
                     ->searchable()
