@@ -6,6 +6,7 @@ use App\Filament\Resources\Themes\Pages\CreateTheme;
 use App\Filament\Resources\Themes\Pages\EditTheme;
 use App\Filament\Resources\Themes\Pages\ListThemes;
 use App\Filament\Resources\Themes\Pages\ViewTheme;
+use App\Filament\Resources\Themes\RelationManagers\CatalogItemsRelationManager;
 use App\Filament\Resources\Themes\RelationManagers\SubthemesRelationManager;
 use App\Filament\Resources\Themes\Schemas\ThemeForm;
 use App\Filament\Resources\Themes\Schemas\ThemeInfolist;
@@ -42,6 +43,7 @@ class ThemeResource extends Resource
     {
         return [
             SubthemesRelationManager::class,
+            CatalogItemsRelationManager::class,
         ];
     }
 
