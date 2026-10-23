@@ -54,6 +54,7 @@ return [
     */
 
     'brickset' => [
+        'key' => env('MURSTEN_TRACK_KEY'),
         'user_hash' => env('MURSTEN_TRACK_USER_HASH'),
     ],
 

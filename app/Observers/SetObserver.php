@@ -3,8 +3,8 @@
 namespace App\Observers;
 
 use App\Models\Set;
+use App\Services\BricksetClient;
 use Illuminate\Support\Facades\Log;
-use NateJacobs\MurstenTrack\Resources\Set as BrickSetSearch;
 use Throwable;
 
 class SetObserver
@@ -55,11 +55,21 @@ class SetObserver
             return;
         }
 
+        // Named as a skip rather than left to the catch below, which reported a
+        // missing API key as though Brickset had refused the request.
+        if (! BricksetClient::isConfigured()) {
+            Log::info('Skipped Brickset quantity sync: no API key configured.', [
+                'set_id' => $set->id,
+            ]);
+
+            return;
+        }
+
         // Counted through the model, so trashed copies are already excluded.
         $quantity = Set::where('catalog_item_id', $set->catalog_item_id)->count();
 
         try {
-            (new BrickSetSearch)->setCollectionQuantity($bricksetId, [
+            BricksetClient::make()->setCollectionQuantity($bricksetId, [
                 'userHash' => $userHash,
                 'qtyOwned' => $quantity,
             ]);

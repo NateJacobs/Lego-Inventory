@@ -6,10 +6,10 @@ use App\Exceptions\BricksetLookupException;
 use App\Models\CatalogItem;
 use App\Models\Theme;
 use App\Services\BricklinkClient;
+use App\Services\BricksetClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
-use NateJacobs\MurstenTrack\Resources\Set as BrickSetSearch;
 
 class CatalogItemObserver
 {
@@ -22,7 +22,7 @@ class CatalogItemObserver
     public function creating(CatalogItem $catalogItem)
     {
         // query Brickset for the set
-        $brickset = new BrickSetSearch();
+        $brickset = BricksetClient::make();
 
         $set_response = $brickset->getSets(
             [
