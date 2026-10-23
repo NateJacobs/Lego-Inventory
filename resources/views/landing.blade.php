@@ -112,12 +112,11 @@
                 0 22px 45px -20px rgba(16, 24, 40, 0.45);
         }
 
-        /* Studs: the top half of a circle, repeated across the edge, on a
-           strip sitting just above its plate so they read as part of it.
-           Diameter is a little over half the pitch, which is roughly the
-           proportion on the real thing — spaced any wider they stop looking
-           like studs and start looking like a perforated edge. The shadow
-           gives each one an edge against the baseplate behind it. */
+        /* Studs: a squared tab per tile, repeated across the edge, on a strip
+           sitting just above its plate so they read as part of it. Each is a
+           little over half the pitch wide — spaced any wider they stop
+           looking like studs and start looking like a perforated edge — and
+           the shadow gives them an edge against the baseplate behind. */
         .plate::before,
         .brick::before {
             content: "";
@@ -132,12 +131,12 @@
                shares the remainder out as gaps between them. */
             background-repeat: space no-repeat;
             background-position: bottom left;
-            background-size: 42px 26px;
+            background-size: 42px 100%;
             filter: drop-shadow(0 -1px 1.5px rgba(16, 24, 40, 0.14));
         }
 
         .plate::before {
-            background-image: radial-gradient(circle at 21px 26px, #fff 13px, transparent 13.5px);
+            background-image: linear-gradient(to right, transparent 0 8px, #fff 8px 34px, transparent 34px);
         }
 
         h1 {
@@ -224,7 +223,7 @@
             right: 0.9rem;
             top: -10px;
             height: 10px;
-            background-size: 34px 20px;
+            background-size: 34px 100%;
         }
 
         .brick dd {
@@ -245,15 +244,15 @@
         }
 
         .brick--red { background: var(--red); box-shadow: 0 5px 0 var(--red-edge); }
-        .brick--red::before { background-image: radial-gradient(circle at 17px 20px, var(--red) 10px, transparent 10.5px); }
+        .brick--red::before { background-image: linear-gradient(to right, transparent 0 7px, var(--red) 7px 27px, transparent 27px); }
 
         .brick--blue { background: var(--blue); box-shadow: 0 5px 0 var(--blue-edge); }
-        .brick--blue::before { background-image: radial-gradient(circle at 17px 20px, var(--blue) 10px, transparent 10.5px); }
+        .brick--blue::before { background-image: linear-gradient(to right, transparent 0 7px, var(--blue) 7px 27px, transparent 27px); }
 
         /* White on yellow is unreadable, so this one takes dark type — which
            is how the real brick is printed on anyway. */
         .brick--yellow { background: var(--yellow); box-shadow: 0 5px 0 var(--yellow-edge); color: var(--ink); }
-        .brick--yellow::before { background-image: radial-gradient(circle at 17px 20px, var(--yellow) 10px, transparent 10.5px); }
+        .brick--yellow::before { background-image: linear-gradient(to right, transparent 0 7px, var(--yellow) 7px 27px, transparent 27px); }
 
         footer {
             text-align: center;
