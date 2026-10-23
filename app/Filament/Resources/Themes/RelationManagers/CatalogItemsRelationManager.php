@@ -11,6 +11,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class CatalogItemsRelationManager extends RelationManager
 {
@@ -18,23 +19,43 @@ class CatalogItemsRelationManager extends RelationManager
 
     protected static ?string $title = 'Sets';
 
+    /**
+     * The theme whose sets this table shows. Its own owner here; the subclass
+     * for a subtheme's page points at the parent instead.
+     */
+    protected function themeToShow(): Theme
+    {
+        return $this->getOwnerRecord();
+    }
+
+    /**
+     * Whether to name the subtheme each set came under — worth a column only
+     * where the sets can come from more than one.
+     */
+    protected function showsSubthemeColumn(): bool
+    {
+        return $this->themeToShow()->parent_id === null;
+    }
+
     public function table(Table $table): Table
     {
-        $theme = $this->getOwnerRecord();
+        $theme = $this->themeToShow();
 
         return $table
             ->recordTitleAttribute('name')
             // A set records its most specific theme, so the relationship alone
             // holds only what Brickset files directly here — for a top-level
             // theme that is usually nothing at all, while its subthemes hold
-            // everything. Widen it to the subthemes so the page answers "what
-            // is in this theme" rather than "what escaped subthemeing".
+            // everything. Widen it to the theme shown plus its subthemes, so
+            // the table answers "what is in this theme" rather than "what
+            // escaped subthemeing".
             //
             // Safe as an ungrouped orWhere because a relation manager only ever
             // queries the one owner record; the relation on Theme is left alone
             // so eager loading elsewhere stays correct.
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->with('theme')
+                ->orWhere('theme_id', $theme->getKey())
                 ->orWhereIn('theme_id', Theme::query()
                     ->select('id')
                     ->where('parent_id', $theme->getKey())))
@@ -58,7 +79,7 @@ class CatalogItemsRelationManager extends RelationManager
                     ->label('Subtheme')
                     ->placeholder('Filed directly here')
                     ->sortable()
-                    ->visible(fn (): bool => $theme->parent_id === null),
+                    ->visible(fn (): bool => $this->showsSubthemeColumn()),
                 TextColumn::make('year')
                     ->sortable(),
                 TextColumn::make('piece_count')
@@ -90,5 +111,10 @@ class CatalogItemsRelationManager extends RelationManager
                     ->icon('heroicon-m-arrow-top-right-on-square')
                     ->url(fn (CatalogItem $record): string => CatalogItemResource::getUrl('view', ['record' => $record])),
             ]);
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return static::$title;
     }
 }
