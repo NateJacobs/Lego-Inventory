@@ -126,7 +126,11 @@
             right: 1.75rem;
             top: -13px;
             height: 13px;
-            background-repeat: repeat-x;
+            /* "space", not "repeat-x": the strip is rarely an exact multiple
+               of the stud pitch, and repeating would clip the last one in
+               half against the edge. This lays down whole studs only and
+               shares the remainder out as gaps between them. */
+            background-repeat: space no-repeat;
             background-position: bottom left;
             background-size: 42px 26px;
             filter: drop-shadow(0 -1px 1.5px rgba(16, 24, 40, 0.14));
