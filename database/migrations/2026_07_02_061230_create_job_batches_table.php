@@ -7,10 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Guarded for the same reason as the failed_jobs table beside it.
      */
     public function up(): void
     {
+        if (Schema::hasTable('job_batches')) {
+            return;
+        }
+
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
@@ -25,9 +29,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('job_batches');
