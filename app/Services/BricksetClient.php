@@ -64,16 +64,43 @@ class BricksetClient
     {
         $response = self::make()->getSets(['setNumber' => $itemNumber]);
 
-        if (! is_array($response) || ! isset($response[0])) {
-            $reason = $response instanceof \Throwable
-                ? $response->getMessage()
-                : 'no matching set was found';
+        if (is_array($response) && isset($response[0])) {
+            return $response[0];
+        }
 
+        if (self::matchedNothing($response)) {
             throw new BricksetLookupException(
-                "Could not load set {$itemNumber} from Brickset: {$reason}"
+                "Brickset has no set numbered {$itemNumber}."
             );
         }
 
-        return $response[0];
+        throw new BricksetLookupException(
+            "Could not load set {$itemNumber} from Brickset: "
+            .($response instanceof \Throwable ? $response->getMessage() : 'the response could not be read').'.'
+        );
+    }
+
+    /**
+     * Whether Brickset answered but matched no set.
+     *
+     * MurstenTrack's createReturnObject() builds its result inside a foreach
+     * over the sets it was given, so a search that matched none never
+     * initialises that variable and `return $sets` reads an undefined one.
+     * Locally that is a warning and the method returns null; with warnings
+     * promoted to exceptions, as on a deployed server, it comes back as an
+     * ErrorException reading "Undefined variable $sets". Neither says what
+     * actually happened, so recognise both and say it plainly — a set number
+     * that predates this catalogue, or a book Brickset files differently, is
+     * not a broken API.
+     */
+    protected static function matchedNothing(mixed $response): bool
+    {
+        if ($response === null) {
+            return true;
+        }
+
+        return $response instanceof \Throwable
+            && (str_contains($response->getMessage(), 'Undefined variable $sets')
+                || str_contains($response->getMessage(), 'Undefined array key "sets"'));
     }
 }
