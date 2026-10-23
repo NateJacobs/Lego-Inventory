@@ -5,11 +5,13 @@ namespace App;
 use App\Exceptions\BricklinkPriceException;
 use App\Exceptions\BricksetImageException;
 use App\Models\CatalogItem;
+use App\Models\Theme;
 use App\Services\BricklinkClient;
 use App\Services\BricksetClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use NateJacobs\MurstenStock\Resources\Price as BLPrice;
+use NateJacobs\MurstenTrack\Responses\Set as BrickSetResponse;
 
 class UpdateCatalogItem
 {
@@ -61,6 +63,51 @@ class UpdateCatalogItem
         // Both lookups came back, so the pair of values above is as of now.
         $catalogItem->prices_updated_at = now();
         $catalogItem->save();
+    }
+
+    /**
+     * Fetch this set from Brickset again and take its description from what
+     * comes back: name, year, piece and minifigure counts, MSRP, theme and
+     * Brickset url.
+     *
+     * Brickset is the source for all of it, so Brickset wins — a set renamed
+     * or re-themed there, or given a piece count it was missing, is corrected
+     * here. The pictures are left to updateImages() and the values to
+     * updateBricklink(); bricklink_id and the item type are this
+     * application's own and are never touched.
+     *
+     * @throws \App\Exceptions\BricksetLookupException
+     */
+    public function updateDetails(): void
+    {
+        $catalogItem = $this->model;
+
+        $this->applyBricksetDetails(BricksetClient::findSet($catalogItem->item_number));
+
+        $catalogItem->save();
+    }
+
+    /**
+     * Copy a Brickset response onto the item without saving it.
+     *
+     * Takes the response rather than looking the set up, so the observer can
+     * pass the one it already holds instead of asking Brickset twice.
+     */
+    public function applyBricksetDetails(BrickSetResponse $set): void
+    {
+        $catalogItem = $this->model;
+
+        $catalogItem->brickset_id = (int) $set->itemNumbers['setID'];
+        $catalogItem->set_number = $set->itemNumbers['number'];
+        $catalogItem->set_number_variant = (int) $set->itemNumbers['numberVariant'];
+        $catalogItem->name = $set->name;
+        $catalogItem->piece_count = (int) $set->pieces;
+        $catalogItem->minifig_count = empty($set->minifigs) ? 0 : $set->minifigs;
+        $catalogItem->retail_price = empty($set->prices['US']['retailPrice']) ? 0 : $set->prices['US']['retailPrice'];
+        $catalogItem->year = $set->year;
+        $catalogItem->theme_id = Theme::resolveFromBrickset($set->themeDetails);
+        $catalogItem->theme_group = $set->themeDetails['themeGroup'];
+        $catalogItem->brickset_url = $set->bricksetURL;
     }
 
     /**

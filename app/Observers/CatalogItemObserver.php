@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Exceptions\BricksetImageException;
 use App\Models\CatalogItem;
-use App\Models\Theme;
 use App\Services\BricklinkClient;
 use App\Services\BricksetClient;
 use App\UpdateCatalogItem;
@@ -22,24 +21,16 @@ class CatalogItemObserver
     public function creating(CatalogItem $catalogItem)
     {
         $set = BricksetClient::findSet($catalogItem->item_number);
+        $update = new UpdateCatalogItem($catalogItem);
 
-        $catalogItem->brickset_id = (int) $set->itemNumbers['setID'];
-        $catalogItem->set_number = $set->itemNumbers['number'];
-        $catalogItem->set_number_variant = (int) $set->itemNumbers['numberVariant'];
-        $catalogItem->name = $set->name;
-        $catalogItem->piece_count = (int) $set->pieces;
-        $catalogItem->minifig_count = empty($set->minifigs) ? 0 : $set->minifigs;
-        $catalogItem->retail_price = empty($set->prices['US']['retailPrice']) ? 0 : $set->prices['US']['retailPrice'];
-        $catalogItem->year = $set->year;
-        $catalogItem->theme_id = $this->resolveTheme($set->themeDetails);
-        $catalogItem->theme_group = $set->themeDetails['themeGroup'];
-        $catalogItem->brickset_url = $set->bricksetURL;
+        // Pass the response both times rather than calling updateDetails() and
+        // updateImages(), which would each ask Brickset for this same set
+        // again. Images come second, since their filenames are built from the
+        // set numbers above.
+        $update->applyBricksetDetails($set);
 
-        // Pass the response we already hold rather than updateImages(), which
-        // would ask Brickset for this same set a second time. Set after the
-        // numbers above, since the filenames are built from them.
         try {
-            (new UpdateCatalogItem($catalogItem))->storeImages($set->images);
+            $update->storeImages($set->images);
         } catch (BricksetImageException $e) {
             // Best effort, as with the prices below: a set is still worth
             // cataloguing without a picture, and collection:download-images
@@ -110,34 +101,4 @@ class CatalogItemObserver
         }
     }
 
-    /**
-     * The id of the most specific theme Brickset gives for a set: its subtheme
-     * when there is one, otherwise its top-level theme.
-     *
-     * Brickset reuses subtheme names — "General", "Miscellaneous",
-     * "Promotional" all appear under many themes — so a subtheme is only ever
-     * matched, or created, beneath its own parent.
-     */
-    private function resolveTheme(array $themeDetails): ?int
-    {
-        $themeId = $this->findOrCreateTheme($themeDetails['theme'] ?? null, null);
-
-        if ($themeId === null) {
-            return null;
-        }
-
-        return $this->findOrCreateTheme($themeDetails['subtheme'] ?? null, $themeId) ?? $themeId;
-    }
-
-    private function findOrCreateTheme(?string $name, ?int $parentId): ?int
-    {
-        if (empty($name)) {
-            return null;
-        }
-
-        return Theme::firstOrCreate([
-            'name' => $name,
-            'parent_id' => $parentId,
-        ])->id;
-    }
 }

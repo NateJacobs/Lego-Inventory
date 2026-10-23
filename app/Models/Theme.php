@@ -39,6 +39,40 @@ class Theme extends Model
     }
 
     /**
+     * The id of the most specific theme Brickset gives for a set: its subtheme
+     * when there is one, otherwise its top-level theme. Creates whichever of
+     * the two this collection has not seen before.
+     *
+     * Brickset reuses subtheme names — "General", "Miscellaneous",
+     * "Promotional" all appear under many themes — so a subtheme is only ever
+     * matched, or created, beneath its own parent.
+     *
+     * @param  array<string, string>  $themeDetails  As built by MurstenTrack's Set response.
+     */
+    public static function resolveFromBrickset(array $themeDetails): ?int
+    {
+        $themeId = self::findOrCreate($themeDetails['theme'] ?? null, null);
+
+        if ($themeId === null) {
+            return null;
+        }
+
+        return self::findOrCreate($themeDetails['subtheme'] ?? null, $themeId) ?? $themeId;
+    }
+
+    protected static function findOrCreate(?string $name, ?int $parentId): ?int
+    {
+        if (empty($name)) {
+            return null;
+        }
+
+        return self::firstOrCreate([
+            'name' => $name,
+            'parent_id' => $parentId,
+        ])->id;
+    }
+
+    /**
      * Where this theme sits in the tree, e.g. "Harry Potter › General". Names
      * like "General" are reused under many parents and mean little alone.
      */

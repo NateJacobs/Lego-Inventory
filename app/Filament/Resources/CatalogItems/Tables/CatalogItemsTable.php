@@ -119,6 +119,34 @@ class CatalogItemsTable
                             $notification->send();
                         })
                         ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('refreshBricksetDetails')
+                        ->label('Refresh Brickset details')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->requiresConfirmation()
+                        ->modalDescription('Name, year, piece and minifigure counts, MSRP and theme will be replaced with what Brickset holds now.')
+                        ->action(function (Collection $records) {
+                            $refreshed = 0;
+                            $failed = [];
+
+                            foreach ($records as $record) {
+                                try {
+                                    (new UpdateCatalogItem($record))->updateDetails();
+                                    $refreshed++;
+                                } catch (BricksetLookupException $e) {
+                                    $failed[] = $record->item_number;
+                                }
+                            }
+
+                            $notification = Notification::make()
+                                ->title("Refreshed {$refreshed} set(s) from Brickset.");
+
+                            empty($failed)
+                                ? $notification->success()
+                                : $notification->body('Failed: '.implode(', ', $failed))->warning();
+
+                            $notification->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('downloadImages')
                         ->label('Download images')
                         ->icon('heroicon-o-photo')

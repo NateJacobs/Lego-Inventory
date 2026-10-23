@@ -47,11 +47,63 @@ class ViewCatalogItem extends ViewRecord
                         ->success()
                         ->send();
                 }),
+            $this->refreshBricksetDetailsAction(),
             $this->downloadImagesAction(),
             $this->overrideBricklinkIdAction(),
             EditAction::make(),
             DeleteAction::make(),
         ];
+    }
+
+    /**
+     * Everything describing a set comes from Brickset at the moment it was
+     * catalogued and was never read again. This asks for it afresh, so a set
+     * renamed, re-themed, or given a piece count it was missing on Brickset is
+     * corrected here.
+     *
+     * Confirmed first, since Brickset wins: a detail that has since changed
+     * there replaces what is held now.
+     */
+    protected function refreshBricksetDetailsAction(): Action
+    {
+        return Action::make('refreshBricksetDetails')
+            ->label('Refresh Brickset details')
+            ->icon('heroicon-o-arrow-down-tray')
+            ->requiresConfirmation()
+            ->modalHeading('Refresh this set from Brickset')
+            ->modalDescription('Name, year, piece and minifigure counts, MSRP and theme will be replaced with what Brickset holds now. Pictures, BrickLink values and the item type are left alone.')
+            ->modalSubmitActionLabel('Refresh')
+            ->action(function (CatalogItem $record): void {
+                $before = $record->only([
+                    'name', 'year', 'piece_count', 'minifig_count', 'retail_price', 'theme_id',
+                ]);
+
+                try {
+                    (new UpdateCatalogItem($record))->updateDetails();
+                } catch (BricksetLookupException $e) {
+                    Notification::make()
+                        ->title('Could not reach Brickset')
+                        ->body($e->getMessage())
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $this->refreshFormData(array_keys($before));
+
+                $changed = collect($before)
+                    ->reject(fn ($value, $field) => $value == $record->{$field})
+                    ->keys();
+
+                Notification::make()
+                    ->title($changed->isEmpty()
+                        ? 'Already up to date with Brickset'
+                        : 'Refreshed from Brickset')
+                    ->body($changed->isEmpty() ? null : 'Changed: '.$changed->implode(', ').'.')
+                    ->success()
+                    ->send();
+            });
     }
 
     /**
