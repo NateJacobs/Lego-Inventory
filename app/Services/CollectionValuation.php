@@ -42,6 +42,17 @@ class CollectionValuation
     }
 
     /**
+     * What the collection cost: every owned copy's purchase price, plus the bulk
+     * lots and BrickLink orders. A removed (soft-deleted) copy no longer counts.
+     */
+    public function costBasis(): float
+    {
+        $sets = (float) Set::query()->sum('purchase_price');
+
+        return round($sets + (float) BulkBrick::all()->sum('cost') + $this->orderValue(), 2);
+    }
+
+    /**
      * Total number of pieces across the whole collection.
      */
     public function pieceCount(): int

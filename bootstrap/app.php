@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Middleware\ConfineVaultTokens;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Matches the throttle the api middleware group carried before.
         $middleware->throttleApi('60,1');
+
+        // A vault.ngtj.com token may read /api/vault and nothing else. Runs before
+        // route binding so it never learns which sets exist.
+        $middleware->api(prepend: [ConfineVaultTokens::class]);
+
+        $middleware->alias([
+            'abilities' => CheckAbilities::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
